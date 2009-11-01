@@ -1,66 +1,103 @@
+%% Copyright (c) 2009 Nick Gerakiens <nick@gerakines.net>
+%% 
+%% Permission is hereby granted, free of charge, to any person
+%% obtaining a copy of this software and associated documentation
+%% files (the "Software"), to deal in the Software without
+%% restriction, including without limitation the rights to use,
+%% copy, modify, merge, publish, distribute, sublicense, and/or sell
+%% copies of the Software, and to permit persons to whom the
+%% Software is furnished to do so, subject to the following
+%% conditions:
+%% 
+%% The above copyright notice and this permission notice shall be
+%% included in all copies or substantial portions of the Software.
+%% 
+%% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+%% EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+%% OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+%% NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+%% HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+%% WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+%% FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+%% OTHER DEALINGS IN THE SOFTWARE.
 -module(heman_db).
 
 -include("heman.hrl").
+-include_lib("stdlib/include/qlc.hrl").
 
 %% exports: supervisor
 -export([start/1, init/2, server_loop/1]).
-%% export: functionality
--export([set/3]).
 
 start(Rules) ->
     proc_lib:start(heman_db, init, [self(), Rules]).
 
 init(Parent, Rules) when is_list(Rules) ->
-    pg2:create(Name),
-    pg2:join(Name, self()),
+    pg2:create(heman_db),
+    pg2:join(heman_db, self()),
     proc_lib:init_ack(Parent, {ok, self()}),
     heman_db:server_loop(#state{ config = Rules }).
 
 server_loop(State) ->
     receive
+        {'$heman_db_server', From, rules} ->
+            Rules = mnesia:activity(transaction, fun() -> qlc:e( qlc:q([R || R <- mnesia:table(rule) ]) ) end),
+            gen:reply(From, Rules);
+        {'$heman_db_server', From, stats} ->
+            Stats = mnesia:activity(transaction, fun() -> qlc:e( qlc:q([R || R <- mnesia:table(stat) ]) ) end),
+            gen:reply(From, Stats);
+        {'$heman_db_server', From, {add_role, Key, Rule}} ->
+            mnesia:transaction(fun() ->
+                mnesia:write(#rule{
+                    key = Key,
+                    rule = Rule
+                })
+            end),
+            gen:reply(From, ok);
         {'$heman_db_server', From, {set, Namespace, Key, Value}} ->
             %% Create a composite key based on date/time, namespace and key name
             %% NKG: Hash it? term_to_binary/1?
             DBKey = {date(), time(), Namespace, Key},
-            %% Determine if an entry exists
-            case ets:lookup(statmaster_db_table, DBKey) of
-                [] ->
-                    %% if not, insert and move on
-                    ets:insert(statmaster_db_table, {DBKey, Value});
-                [{DBKey, OldValue}] ->
-                    NewValue = bump_data(State, DBKey, OldValue, Value),
-                    ets:insert(statmaster_db_table, {DBKey, NewValue});
-                _ -> no_op
-            end,
+            mnesia:transaction(fun() ->
+                %% Determine if an entry exists
+                case mnesia:wread({stat, DBKey}) of
+                    [OldStat] ->
+                        NewValue = bump_data(mnesia:wread({rule, {Namespace, Key}}), DBKey, OldStat#stat.value, Value),
+                        mnesia:write(OldStat#stat{ value = NewValue });
+                    [] ->
+                        %% if not, insert and move on
+                        mnesia:write(#stat{
+                            pkey = DBKey,
+                            fordate = {date(), time()},
+                            namespace = Namespace,
+                            key = Key,
+                            value = Value
+                        })
+                end
+            end),
             gen:reply(From, ok);
         {'$heman_db_server', From, {get, Namespace, Key}} ->
-            Results = ets:lookup(statmaster_db_table, DBKey)
-            gen:reply(From, Results);
+            Stats = mnesia:activity(transaction, fun() ->
+                qlc:e( qlc:q([R || R <- mnesia:table(stat), R#stat.namespace == Namespace, R#stat.key == Key ]) )
+            end),
+            gen:reply(From, Stats);
         Other ->
             error_logger:warning_report({?MODULE, ?LINE, unexpected_message, Other})
     end,
     heman_db:server_loop(State).
 
-bump_data(State, {_, _, Namespace, Key}, OldValue, NewValue) ->
-    case lists:keysearch({Namespace, Key}, 2, State#state.config) of
+bump_data(Rules, {_, _, Namespace, Key}, OldValue, NewValue) ->
+    case lists:keysearch({Namespace, Key}, 2, Rules) of
         false ->
             OldValue + NewValue;
-        {value, {{Namespace, Key}, Rule}} ->
-            case Rule of
+        {value, Rule} when is_record(Rule, rule) ->
+            case Rule#rule.rule of
+                larger -> case NewValue > OldValue of true -> NewValue; _ -> OldValue end;
+                smaller -> case NewValue < OldValue of true -> NewValue; _ -> OldValue end;
                 replace -> NewValue;
-                increase -> OldValue + NewValue;
                 {M, F} ->
                     apply(M, F, [OldValue, NewValue]);
-                Fun ->
-                    Fun(OldValue, NewValue)
+                Fun when is_function(Fun) ->
+                    Fun(OldValue, NewValue);
+                _ -> OldValue + NewValue
             end
     end.
-
-set(N, K, V) when is_list(N) -> set(list_to_binary(N), K, V);
-set(N, K, V) when is_list(K) -> set(N, list_to_binary(K), V);
-set(N, K, V) when is_list(V) -> set(N, K,list_to_binary(V));
-set(Namespace, Key, Value) ->
-    gen:call(global:whereis_name(heman_db), '$heman_db_server', {set, Namespace, Key, Value}, 5000).
-
-get(Name, Key) ->
-    gen:call(global:whereis_name(heman_db), '$heman_db_server', {get, Namespace, Key}, 5000).

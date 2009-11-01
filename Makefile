@@ -16,9 +16,13 @@ app:
 test: compile
 	prove t/*.t
 
+cover: all
+	COVER=1 prove t/*.t
+	erl -detached -noshell -eval 'etap_report:create()' -s init stop
+
 clean:
 	(cd src;$(MAKE) clean)
-	rm -rf erl_crash.dump *.boot *.rel *.script ebin/*.beam ebin/*.app
+	rm -rf erl_crash.dump *.boot *.rel *.script ebin/*.beam ebin/*.app *.beam
 
 rel: compile
 	erl -pa ebin -noshell -run emongo_app build_rel -s init stop

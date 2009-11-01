@@ -12,7 +12,10 @@ ${MODULES}
     ]},
     {registered, []},
     {mod, {heman, []}},
-    {applications, [kernel, stdlib]}
+    {applications, [kernel, stdlib, sasl, crypto, mnesia]},
+    {start_phases, [
+      {mnesia, []}
+    ]}
 ]}.
 EOF
 
