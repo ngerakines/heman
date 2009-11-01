@@ -1,0 +1,3 @@
+-record(rule, {key, rule}).
+-record(state, { config = [] }).
+-record(stat, {pkey, when, namespace, key, value}).
