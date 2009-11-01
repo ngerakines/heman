@@ -25,7 +25,7 @@ clean:
 	rm -rf erl_crash.dump *.boot *.rel *.script ebin/*.beam ebin/*.app *.beam
 
 rel: compile
-	erl -pa ebin -noshell -run emongo_app build_rel -s init stop
+	erl -pa ebin -noshell -run heman build_rel -s init stop
 	
 package: clean
 	@mkdir $(PKGNAME)-$(VERSION)/ && cp -rf ebin include Makefile priv README.markdown src support t $(PKGNAME)-$(VERSION)

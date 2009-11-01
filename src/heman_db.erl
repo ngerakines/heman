@@ -26,7 +26,7 @@
 -include_lib("stdlib/include/qlc.hrl").
 
 %% exports: supervisor
--export([start/1, init/2, server_loop/1]).
+-export([start/1, init/2, server_loop/0]).
 
 start(Rules) ->
     proc_lib:start(heman_db, init, [self(), Rules]).
@@ -35,17 +35,35 @@ init(Parent, Rules) when is_list(Rules) ->
     pg2:create(heman_db),
     pg2:join(heman_db, self()),
     proc_lib:init_ack(Parent, {ok, self()}),
-    heman_db:server_loop(#state{ config = Rules }).
+    heman_db:server_loop().
 
-server_loop(State) ->
+server_loop() ->
     receive
+        {'$heman_db_server', From, {health, {get, Namespace}}} ->
+            Rules = mnesia:activity(transaction, fun() ->
+                qlc:e( qlc:q([R || R <- mnesia:table(health), R#health.namespace == Namespace ]) )
+            end),
+            SortedRules = lists:sort(
+                fun(A, B) -> A#health.priority < B#health.priority end,
+                Rules
+            ),
+            gen:reply(From, SortedRules);
+        {'$heman_db_server', From, {health, {set, Namespace, Priority, Key, Rules}}} ->
+            mnesia:transaction(fun() -> mnesia:write(#health{
+                pkey = {Namespace, Key},
+                namespace = Namespace,
+                priority = Priority,
+                key = Key,
+                rules = Rules
+            }) end),
+            gen:reply(From, ok);
         {'$heman_db_server', From, rules} ->
             Rules = mnesia:activity(transaction, fun() -> qlc:e( qlc:q([R || R <- mnesia:table(rule) ]) ) end),
             gen:reply(From, Rules);
         {'$heman_db_server', From, stats} ->
             Stats = mnesia:activity(transaction, fun() -> qlc:e( qlc:q([R || R <- mnesia:table(stat) ]) ) end),
             gen:reply(From, Stats);
-        {'$heman_db_server', From, {add_role, Key, Rule}} ->
+        {'$heman_db_server', From, {add_rule, Key, Rule}} ->
             mnesia:transaction(fun() ->
                 mnesia:write(#rule{
                     key = Key,
@@ -83,7 +101,7 @@ server_loop(State) ->
         Other ->
             error_logger:warning_report({?MODULE, ?LINE, unexpected_message, Other})
     end,
-    heman_db:server_loop(State).
+    heman_db:server_loop().
 
 bump_data(Rules, {_, _, Namespace, Key}, OldValue, NewValue) ->
     case lists:keysearch({Namespace, Key}, 2, Rules) of

@@ -1,3 +1,3 @@
 -record(rule, {key, rule}).
 -record(stat, {pkey, fordate, namespace, key, value}).
--record(health, {pkey, namespace, key, rules}).
+-record(health, {pkey, namespace, priority, key, rules}).
