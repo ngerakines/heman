@@ -14,7 +14,8 @@ ${MODULES}
     {mod, {heman, []}},
     {applications, [kernel, stdlib, sasl, crypto, mnesia]},
     {start_phases, [
-      {mnesia, []}
+      {mnesia, []},
+	  {populate_rules, []}
     ]}
 ]}.
 EOF

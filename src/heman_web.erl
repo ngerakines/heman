@@ -22,10 +22,28 @@
 %% OTHER DEALINGS IN THE SOFTWARE.
 -module(heman_web).
 
+-include("heman.hrl").
+
 -export([start/0, dispatch/1]).
 
 start() ->
-    mochiweb_http:start([{loop, fun statmaster_web:dispatch/1}, {port, 7816}]).
+    mochiweb_http:start([{loop, fun heman_web:dispatch/1}, {port, 7816}]).
 
 dispatch(Req) ->
-    Req:respond({200, [{"Content-Type", "text/html"}], <<"Got it!">>}).
+    UriParts = string:tokens(Req:get(path), "/"),
+    handle([Req:get(method) | UriParts], Req).
+
+handle(['GET'], Req) ->
+    Namespaces = lists:usort([ NS || {NS, _} <- [Rule#rule.key || Rule <- heman:rules()]]),
+    Projects = [ {NS, heman:health(NS)} || NS <- Namespaces],
+    Body = erlang:iolist_to_binary(heman_troot:main(Projects)),
+    Req:respond({200, [{"Content-Type", "text/html"}], Body});
+
+handle(['GET', Namespace], Req) ->
+    Score = heman:health(Namespace),
+    Log = heman:log(Namespace),
+    Body = erlang:iolist_to_binary(heman_tnamespace:main({Namespace, Score}, Log)),
+    Req:respond({200, [{"Content-Type", "text/html"}], Body});
+
+handle(_, Req) ->
+    Req:respond({404, [{"Content-Type", "text/html"}], <<"">>}).

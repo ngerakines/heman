@@ -1,0 +1,25 @@
+<%@ main(Projects) %>
+<html>
+	<head>
+		<title>Status</title>
+		<style>
+			.error {text-align:center;margin:5px;padding:3px;color:#333;border:red solid 1px;background-color:#F96}
+			.warning {text-align:center;margin:5px;color:#333;padding:3px;border:#FC0 solid 1px;background-color:#FF9}
+			.info {text-align:center;margin:5px;color:#333;padding:3px;border:#0F0 solid 1px;background-color:#6F6}
+			body {margin:50px 0;padding:0;text-align:center}
+			.content {width:700px;margin:0 auto;text-align:left;padding:10px}
+		</style>
+	</head>
+	<body>
+	<div class="content">
+	<h1>Status</h1>
+<% list_projects(Projects) %>
+	</div>
+</body>
+</html>
+<%@ list_projects([]) %>
+<%@ list_projects([Project | Projects]) %><% display_project(Project) %>
+<% list_projects(Projects) %>
+<%@ display_project({Namespace, Score}) when Score > 89 %><div class="info"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>Healthy</strong>.</div>
+<%@ display_project({Namespace, Score}) when Score > 49 %><div class="warning"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>OK</strong>.</div>
+<%@ display_project({Namespace, Score}) %><div class="error"><a href="/<% Namespace %>"><% Namespace %></a> is in <strong>Danger</strong>.</div>

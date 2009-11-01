@@ -1,6 +1,6 @@
 #!/usr/bin/env escript
 %% -*- erlang -*-
-%%! -pa ../heman ./ebin -boot start_sasl -config heman -sasl errlog_type error
+%%! -pa ../heman ./ebin -boot start_sasl -sasl errlog_type error
 
 -include_lib("heman/include/heman.hrl").
 

@@ -1,10 +1,11 @@
 # Makefile lifted (w/ minor changes) from Jacob Vorreuter's emongo project; thanks
+.PHONY: templates
 VERSION=0.0.1
 PKGNAME=heman
 LIBDIR=$(shell erl -eval 'io:format("~s~n", [code:lib_dir()])' -s init stop -noshell)
 ROOTDIR=$(shell erl -eval 'io:format("~s~n", [code:root_dir()])' -s init stop -noshell)
 
-all: rel
+all: rel templates
 	
 compile: app
 	mkdir -p ebin/
@@ -13,12 +14,17 @@ compile: app
 app:
 	sh ebin/$(PKGNAME).app.in $(VERSION)
 
-test: compile
+test: compile templates
 	prove t/*.t
 
 cover: all
 	COVER=1 prove t/*.t
 	erl -detached -noshell -eval 'etap_report:create()' -s init stop
+
+templates: 
+	mkdir -p ./ebin/
+	erl -noshell -eval "erltl:compile(\"./templates/heman_troot.et\", [{outdir, \"./ebin\"}, report_errors, report_warnings, nowarn_unused_vars])." -s init stop
+	erl -noshell -eval "erltl:compile(\"./templates/heman_tnamespace.et\", [{outdir, \"./ebin\"}, report_errors, report_warnings, nowarn_unused_vars])." -s init stop
 
 clean:
 	(cd src;$(MAKE) clean)

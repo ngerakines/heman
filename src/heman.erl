@@ -29,7 +29,7 @@
 -export([env_key/1, env_key/2, build_rel/0, reload/0]).
 %% exports: interface
 -export([set/3, get/2, add_rule/2, rules/0, stats/0, health/1]).
--export([add_health_rule/4, health_rules/1]).
+-export([add_health_rule/4, health_rules/1, log/1, log/3]).
 
 -include("heman.hrl").
 
@@ -44,13 +44,17 @@ start_phase(mnesia, _, _) ->
     mnesia:create_table(rule, [{record_name, rule}, {attributes, record_info(fields, rule)}, {index, []}]),
     mnesia:create_table(stat, [{record_name, stat}, {attributes, record_info(fields, stat)}, {index, [fordate, namespace, key]}]),
     mnesia:create_table(health, [{record_name, health}, {attributes, record_info(fields, health)}, {index, [namespace]}]),
+    mnesia:create_table(log, [{record_name, log}, {attributes, record_info(fields, log)}, {index, [namespace]}]),
     mnesia:wait_for_tables([rule, stat], 5000),
+    ok;
+
+start_phase(populate_rules, _, _) ->
+    [ heman:add_rule(Key, Rule)  || {Key, Rule} <- env_key(rules, [])],
     ok.
 
 init(_) ->
-    Rules = [#rule{ key = Key, rule = Rule} || {Key, Rule} <- env_key(rules, [])],
     {ok, {{one_for_one, 10, 10}, [
-        {heman_db, {heman_db, start, [Rules]}, permanent, 5000, worker, [heman_db]},
+        {heman_db, {heman_db, start, []}, permanent, 5000, worker, [heman_db]},
         {heman_web, {heman_web, start, []}, permanent, 5000, worker, [heman_web]}
     ]}}.
 
@@ -62,7 +66,7 @@ env_key(Key, Default) ->
     end.
 
 build_rel() ->
-    Apps = [kernel, stdlib, sasl, crypto, inets],
+    Apps = [kernel, stdlib, sasl, crypto, inets, mnesia],
     {ok, FD} = file:open("heman.rel", [write]),
     RelInfo = {release,
         {"heman", "0.0.1"},
@@ -180,3 +184,9 @@ result({hours, Hours, sum}, CRule, RRule, Data) ->
 
 apply_rule({increase, N}) -> {stop, N};
 apply_rule({decrease, N}) -> {stop, -N}.
+
+log(Namespace) ->
+    [].
+
+log(Namespace, Date, Reason) ->
+    ok.

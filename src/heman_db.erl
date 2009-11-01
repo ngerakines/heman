@@ -26,17 +26,18 @@
 -include_lib("stdlib/include/qlc.hrl").
 
 %% exports: supervisor
--export([start/1, init/2, server_loop/0]).
+-export([start/0, init/1, server_loop/0]).
 
-start(Rules) ->
-    proc_lib:start(heman_db, init, [self(), Rules]).
+start() ->
+    proc_lib:start(heman_db, init, [self()]).
 
-init(Parent, Rules) when is_list(Rules) ->
+init(Parent) ->
     pg2:create(heman_db),
     pg2:join(heman_db, self()),
     proc_lib:init_ack(Parent, {ok, self()}),
     heman_db:server_loop().
 
+%% TODO: Cleanup the receive handle, the patterns aren't organized.
 server_loop() ->
     receive
         {'$heman_db_server', From, {health, {get, Namespace}}} ->

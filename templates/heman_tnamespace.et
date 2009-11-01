@@ -1,0 +1,44 @@
+<%@ main(Score, Logs) %>
+<html>
+	<head>
+		<title>Status</title>
+		<style>
+			div .error {text-align:center;margin:5px;padding:3px;color:#333;border:red solid 1px;background-color:#F96}
+			div .warning {text-align:center;margin:5px;color:#333;padding:3px;border:#FC0 solid 1px;background-color:#FF9}
+			div .info {text-align:center;margin:5px;color:#333;padding:3px;border:#0F0 solid 1px;background-color:#6F6}
+			body {margin:50px 0;padding:0;text-align:center}
+			.content {width:700px;margin:0 auto;text-align:left;padding:10px}
+		</style>
+	</head>
+	<body>
+		<div class="content">
+			<table>
+				<tr>
+					<td><% display_project(Score) %></td>
+				</tr>
+				<tr>
+					<td>
+						<% display_logs(Logs) %>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</body>
+</html>
+<%@ display_project({Namespace, Score}) when Score > 89 %><div class="info"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>Healthy</strong>.</div>
+<%@ display_project({Namespace, Score}) when Score > 49 %><div class="warning"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>OK</strong>.</div>
+<%@ display_project({Namespace, Score}) %><div class="error"><a href="/<% Namespace %>"><% Namespace %></a> is in <strong>Danger</strong>.</div>
+<%@ display_logs([]) %>
+<p>There are no recent log entries for this namespace.</p>
+<%@ display_logs(Logs) %>
+<% [ display_log(Class, Status, Date, Entries) || {Class, Status, Date, Entries} <- Logs] %>
+<%@ display_log(Class, Status, Date, Entries) %>
+<p class="<% Class %>">
+	<!-- It'd be really cool if we could left-align the status and right-align the date. -->
+	<strong><% Status %></strong><small><% Date %></small>
+	<% display_entries(Entries) %>
+</p>
+<%@ display_entries([]) %>
+<%@ display_entries(Entries) %>
+<ul><% [display_entry(Entry) || Entry <- Entries] %></ul>
+<%@ display_entry(Entry) %><li><% Entry %></li>
