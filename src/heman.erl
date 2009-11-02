@@ -60,7 +60,7 @@ start_phase(mnesia, _, _) ->
     ok;
 
 start_phase(populate_rules, _, _) ->
-    [ heman:add_rule(Key, Rule)  || {Key, Rule} <- env_key(rules, [])],
+    [ heman:rule_set(Key, Rule, DisplayName)  || {Key, Rule, DisplayName} <- env_key(rules, [])],
     ok.
 
 init(_) ->
@@ -195,6 +195,7 @@ health_iter(Namespace, [Rule | Rules], Acc) ->
 %% What data do you need?
 %% What is the condition?
 %% What is the result?
+%% What is the default result?
 health_rule_iter(_, [], _, Acc) -> Acc;
 health_rule_iter(Health, [Rule | Rules], Data, Acc) ->
     {DRule, CRule, RRule} = Rule,

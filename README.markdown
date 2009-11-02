@@ -8,6 +8,11 @@ Heman is an application health monitoring system for application-level health. T
  * Allow developers to create 'rules' that help discern overall application health.
  * Create a clean, easy to read interface to describe application health.
 
+*What it is NOT*:
+
+ * A throttling system or framework.
+ * A nagios or cacti replacement.
+
 # How does it work?
 
 The key concept here are stats and how they affect the health score of an application. When heman is started, a number of rules are registered that tell heman how to process certain stats. An example rule could be "queuelength" under the namespace "queues" with a rule type of "replace".
@@ -22,3 +27,4 @@ Lastly, the web interface is provided to give a quick view into the health of th
 
  * Create process and code that periodically prunes old data.
  * Create event log and process health periodically into that log.
+

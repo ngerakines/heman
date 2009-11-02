@@ -15,6 +15,12 @@ The stats are collected and aggregated.
 
 The health rules are used to create a health score for a given namespace.
 
+### Conditions
+
+A condition is broken into 3 components: The data aggregate, the case and the results.
+
+There is an additional fourth component called the default. If none of the previous triggers are fired then this result is applied.
+
 ## Log
 
 The log keeps a record of a health score at a period of time and describes why.
