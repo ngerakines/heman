@@ -37,9 +37,9 @@ init(Parent) ->
     proc_lib:init_ack(Parent, {ok, self()}),
     heman_db:server_loop().
 
-%% TODO: Cleanup the receive handle, the patterns aren't organized.
 server_loop() ->
     receive
+        %% Health
         {'$heman_db_server', From, {health, {get, Namespace}}} ->
             Rules = mnesia:activity(transaction, fun() ->
                 qlc:e( qlc:q([R || R <- mnesia:table(health), R#health.namespace == Namespace ]) )
@@ -58,32 +58,28 @@ server_loop() ->
                 rules = Rules
             }) end),
             gen:reply(From, ok);
-        {'$heman_db_server', From, rules} ->
+        %% Rules
+        {'$heman_db_server', From, {rule, get}} ->
             Rules = mnesia:activity(transaction, fun() -> qlc:e( qlc:q([R || R <- mnesia:table(rule) ]) ) end),
             gen:reply(From, Rules);
-        {'$heman_db_server', From, stats} ->
-            Stats = mnesia:activity(transaction, fun() -> qlc:e( qlc:q([R || R <- mnesia:table(stat) ]) ) end),
-            gen:reply(From, Stats);
-        {'$heman_db_server', From, {add_rule, Key, Rule}} ->
+        {'$heman_db_server', From, {rule, {set, Key, Rule, DisplayName}}} ->
             mnesia:transaction(fun() ->
                 mnesia:write(#rule{
                     key = Key,
-                    rule = Rule
+                    rule = Rule,
+                    display_name = DisplayName
                 })
             end),
             gen:reply(From, ok);
-        {'$heman_db_server', From, {set, Namespace, Key, Value}} ->
-            %% Create a composite key based on date/time, namespace and key name
-            %% NKG: Hash it? term_to_binary/1?
+        %% Stats
+        {'$heman_db_server', From, {stat, {set, Namespace, Key, Value}}} ->
             DBKey = {date(), time(), Namespace, Key},
             mnesia:transaction(fun() ->
-                %% Determine if an entry exists
                 case mnesia:wread({stat, DBKey}) of
                     [OldStat] ->
                         NewValue = bump_data(mnesia:wread({rule, {Namespace, Key}}), DBKey, OldStat#stat.value, Value),
                         mnesia:write(OldStat#stat{ value = NewValue });
                     [] ->
-                        %% if not, insert and move on
                         mnesia:write(#stat{
                             pkey = DBKey,
                             fordate = {date(), time()},
@@ -94,7 +90,10 @@ server_loop() ->
                 end
             end),
             gen:reply(From, ok);
-        {'$heman_db_server', From, {get, Namespace, Key}} ->
+        {'$heman_db_server', From, {stat, get}} ->
+            Stats = mnesia:activity(transaction, fun() -> qlc:e( qlc:q([R || R <- mnesia:table(stat) ]) ) end),
+            gen:reply(From, Stats);
+        {'$heman_db_server', From, {stat, {get, Namespace, Key}}} ->
             Stats = mnesia:activity(transaction, fun() ->
                 qlc:e( qlc:q([R || R <- mnesia:table(stat), R#stat.namespace == Namespace, R#stat.key == Key ]) )
             end),
@@ -120,3 +119,4 @@ bump_data(Rules, {_, _, Namespace, Key}, OldValue, NewValue) ->
                 _ -> OldValue + NewValue
             end
     end.
+

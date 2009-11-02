@@ -1,4 +1,4 @@
--record(rule, {key, rule}).
+-record(rule, {key, rule, display_name}).
 -record(stat, {pkey, fordate, namespace, key, value}).
 -record(health, {pkey, namespace, priority, key, rules}).
 -record(log, {pkey, namespace, date, entries}).

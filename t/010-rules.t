@@ -11,13 +11,13 @@ main(_) ->
     etap_application:start_ok(heman, "application 'heman' started ok"),
 
     (fun() ->
-        etap:is(heman:add_rule({<<"movies">>, <<"action">>}, increase), ok, "rule 1 created"),
-        etap:is(heman:add_rule({<<"movies">>, <<"comedy">>}, increase), ok, "rule 2 created"),
+        etap:is(heman:rule_set({<<"movies">>, <<"action">>}, increase, "Action Movies"), ok, "rule 1 created"),
+        etap:is(heman:rule_set({<<"movies">>, <<"comedy">>}, increase, "Comedy Movies"), ok, "rule 2 created"),
         Rules = [
-            {rule,{<<"movies">>,<<"action">>},increase},
-            {rule,{<<"movies">>,<<"comedy">>},increase}
+            {rule,{<<"movies">>,<<"action">>}, increase, "Action Movies"},
+            {rule,{<<"movies">>,<<"comedy">>}, increase, "Comedy Movies"}
         ],
-        etap:is(lists:sort(heman:rules()), lists:sort(Rules), "rules exist"),
+        etap:is(lists:sort(heman:rule_get()), lists:sort(Rules), "rules exist"),
         ok
     end)(),
 

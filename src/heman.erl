@@ -28,8 +28,19 @@
 %% exports: build, misc
 -export([env_key/1, env_key/2, build_rel/0, reload/0]).
 %% exports: interface
--export([set/3, get/2, add_rule/2, rules/0, stats/0, health/1]).
--export([add_health_rule/4, health_rules/1, log/1, log/3]).
+-export([
+    stat_set/3,
+    stat_get/2,
+    rule_set/2, 
+    rule_set/3,
+    rule_get/0,
+    stat_get/0,
+    health/1,
+    health_set/4,
+    health_get/1,
+    log_get/1,
+    log_set/3
+]).
 
 -include("heman.hrl").
 
@@ -104,56 +115,80 @@ get_app_version(AppName) ->
             end
     end.
 
-set(N, K, V) when is_list(N) -> set(list_to_binary(N), K, V);
-set(N, K, V) when is_list(K) -> set(N, list_to_binary(K), V);
-set(Namespace, Key, Value) ->
-    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {set, Namespace, Key, Value}, 5000) of
+%% -
+%% Rules
+
+rule_set(Key, Rule) ->
+    rule_set(Key, Rule, undefined).
+
+rule_set(Key, Rule, DisplayName) ->
+    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {rule, {set, Key, Rule, DisplayName}}, 5000) of
         {ok, ok} -> ok;
         Other -> Other
     end.
 
-get(Namespace, Key) ->
-    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {get, Namespace, Key}, 5000) of
-        {ok, Stats} -> Stats;
-        Other -> Other
-    end.
-
-add_rule(Key, Rule) ->
-    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {add_rule, Key, Rule}, 5000) of
-        {ok, ok} -> ok;
-        Other -> Other
-    end.
-
-rules() ->
-    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', rules, 5000) of
+rule_get() ->
+    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {rule, get}, 5000) of
         {ok, Results} -> Results;
         Other -> Other
     end.
 
-stats() ->
-    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', stats, 5000) of
-        {ok, Results} -> Results;
-        Other -> Other
-    end.
+%% -
+%% Health
 
-add_health_rule(Namespace, Priority, Key, Rules) ->
+health_set(Namespace, Priority, Key, Rules) ->
     case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {health, {set, Namespace, Priority, Key, Rules}}, 5000) of
         {ok, ok} -> ok;
         Other -> Other
     end.
 
-health_rules(Namespace) ->
+health_get(Namespace) ->
     case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {health, {get, Namespace}}, 5000) of
         {ok, Results} -> Results;
         Other -> Other
     end.
 
 health(Namespace) ->
-    health_iter(Namespace, health_rules(Namespace), 50).
+    health_iter(Namespace, health_get(Namespace), 50).
+
+%% -
+%% Stats
+
+stat_set(N, K, V) when is_list(N) -> stat_set(list_to_binary(N), K, V);
+stat_set(N, K, V) when is_list(K) -> stat_set(N, list_to_binary(K), V);
+stat_set(Namespace, Key, Value) ->
+    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {stat, {set, Namespace, Key, Value}}, 5000) of
+        {ok, ok} -> ok;
+        Other -> Other
+    end.
+
+stat_get(Namespace, Key) ->
+    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {stat, {get, Namespace, Key}}, 5000) of
+        {ok, Stats} -> Stats;
+        Other -> Other
+    end.
+
+stat_get() ->
+    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {stat, get}, 5000) of
+        {ok, Results} -> Results;
+        Other -> Other
+    end.
+
+%% -
+%% Logs
+
+log_get(_Namespace) ->
+    [].
+
+log_set(_Namespace, _Date, _Reason) ->
+    ok.
+
+%% -
+%% Internals
 
 health_iter(_, [], Acc) -> Acc;
 health_iter(Namespace, [Rule | Rules], Acc) ->
-    Data = get(Namespace, Rule#health.key),
+    Data = stat_get(Namespace, Rule#health.key),
     NewAcc = health_rule_iter(Namespace, Rule#health.rules, Data, Acc),
     health_iter(Namespace, Rules, NewAcc).
 
@@ -185,8 +220,3 @@ result({hours, Hours, sum}, CRule, RRule, Data) ->
 apply_rule({increase, N}) -> {stop, N};
 apply_rule({decrease, N}) -> {stop, -N}.
 
-log(Namespace) ->
-    [].
-
-log(Namespace, Date, Reason) ->
-    ok.
