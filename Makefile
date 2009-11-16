@@ -43,3 +43,6 @@ install:
 	@mkdir -p $(prefix)/$(ROOTDIR)/bin
 	for i in ebin/*.beam include/*.hrl ebin/*.app; do install $$i $(prefix)/$(LIBDIR)/$(PKGNAME)-$(VERSION)/$$i ; done
 	cp *.boot $(prefix)/$(ROOTDIR)/bin/
+
+dev:
+	erl -pa ./ebin -boot start_sasl -eval "[application:start(X) || X <- [sasl, mnesia, crypto, heman]]"

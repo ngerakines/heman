@@ -39,7 +39,8 @@
     health_set/4,
     health_get/1,
     log_get/1,
-    log_set/3
+    log_set/3,
+    namespaces/0
 ]).
 
 -include("heman.hrl").
@@ -66,7 +67,8 @@ start_phase(populate_rules, _, _) ->
 init(_) ->
     {ok, {{one_for_one, 10, 10}, [
         {heman_db, {heman_db, start, []}, permanent, 5000, worker, [heman_db]},
-        {heman_web, {heman_web, start, []}, permanent, 5000, worker, [heman_web]}
+        {heman_web, {heman_web, start, []}, permanent, 5000, worker, [heman_web]},
+        {heman_tcp, {heman_tcp, start, []}, permanent, 5000, worker, [heman_tcp]}
     ]}}.
 
 env_key(Key) -> env_key(Key, undefined).
@@ -151,6 +153,9 @@ health_get(Namespace) ->
 health(Namespace) ->
     health_iter(Namespace, health_get(Namespace), 50).
 
+namespaces() ->
+    [].
+
 %% -
 %% Stats
 
@@ -220,4 +225,3 @@ result({hours, Hours, sum}, CRule, RRule, Data) ->
 
 apply_rule({increase, N}) -> {stop, N};
 apply_rule({decrease, N}) -> {stop, -N}.
-
