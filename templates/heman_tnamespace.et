@@ -1,4 +1,4 @@
-<%@ main(Score, Logs) %>
+<%@ main(Score, Logs, Keys, Stats) %>
 <html>
 	<head>
 		<title>Status</title>
@@ -22,12 +22,16 @@
 					</td>
 				</tr>
 			</table>
+			<ul>
+			<% [ show_rule(Key) || Key <- Keys ] %>
+			</ul>
+			<% [stats_table(Key, Stat) || {Key, Stat} <- Stats] %>
 		</div>
 	</body>
 </html>
-<%@ display_project({Namespace, Score}) when Score > 89 %><div class="info"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>Healthy</strong>.</div>
-<%@ display_project({Namespace, Score}) when Score > 49 %><div class="warning"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>OK</strong>.</div>
-<%@ display_project({Namespace, Score}) %><div class="error"><a href="/<% Namespace %>"><% Namespace %></a> is in <strong>Danger</strong>.</div>
+<%@ display_project({Namespace, Score}) when Score > 89 %><div class="info"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>Healthy</strong> (<% integer_to_list(Score) %>).</div>
+<%@ display_project({Namespace, Score}) when Score > 49 %><div class="warning"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>OK</strong> (<% integer_to_list(Score) %>).</div>
+<%@ display_project({Namespace, Score}) %><div class="error"><a href="/<% Namespace %>"><% Namespace %></a> is in <strong>Danger</strong> (<% integer_to_list(Score) %>).</div>
 <%@ display_logs([]) %>
 <p>There are no recent log entries for this namespace.</p>
 <%@ display_logs(Logs) %>
@@ -42,3 +46,16 @@
 <%@ display_entries(Entries) %>
 <ul><% [display_entry(Entry) || Entry <- Entries] %></ul>
 <%@ display_entry(Entry) %><li><% Entry %></li>
+<%@ show_rule(Key) %><li><% Key %></li>
+<%@ stats_table(Key, Stats) %>
+<h1><% Key %></h1>
+<table width="200"><% [show_stats(Stat) || Stat <- Stats] %></table>
+<%@ show_stats({{_, {H,M,_}} ,NS, Key, Value}) %>
+<tr>
+<td align="left"><% integer_to_list(H) %>:<% integer_to_list(M) %></td>
+<!--
+<td><% NS %></td>
+<td><% Key %></td>
+-->
+<td align="right"><% integer_to_list(Value) %></td>
+</tr>

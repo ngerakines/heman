@@ -34,15 +34,26 @@ dispatch(Req) ->
     handle([Req:get(method) | UriParts], Req).
 
 handle(['GET'], Req) ->
-    Namespaces = lists:usort([ NS || {NS, _} <- [Rule#rule.key || Rule <- heman:rules()]]),
+    Namespaces = heman:namespaces(),
     Projects = [ {NS, heman:health(NS)} || NS <- Namespaces],
     Body = erlang:iolist_to_binary(heman_troot:main(Projects)),
     Req:respond({200, [{"Content-Type", "text/html"}], Body});
 
 handle(['GET', Namespace], Req) ->
     Score = heman:health(Namespace),
-    Log = heman:log(Namespace),
-    Body = erlang:iolist_to_binary(heman_tnamespace:main({Namespace, Score}, Log)),
+    Log = heman:log_get(Namespace),
+    Rules = heman:rule_get(),
+    Keys = lists:usort([ Key || #rule{ key = {NS, Key}} <- Rules, NS == list_to_binary(Namespace) ]),
+    Stats = [begin
+        Dataset = lists:keysort(1, [begin
+            {Stat#stat.fordate, Stat#stat.namespace, Stat#stat.key, Stat#stat.value}
+        end || Stat <- heman:stat_get(Namespace, Key)]),
+        case length(Dataset) > 10 of
+            true -> {Key, lists:nthtail(10, Dataset)};
+            _ -> {Key, Dataset}
+        end
+    end || Key <- Keys],
+    Body = erlang:iolist_to_binary(heman_tnamespace:main({Namespace, Score}, Log, Keys, Stats)),
     Req:respond({200, [{"Content-Type", "text/html"}], Body});
 
 handle(_, Req) ->

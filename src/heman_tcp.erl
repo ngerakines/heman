@@ -8,7 +8,6 @@
 
 -record(state, {port, ip = any, listen = null, acceptor = null, backlog = 30}).
 -define(IDLE_TIMEOUT, 30000).
--define(MAX_HEADERS, 1000).
 
 start() ->
     start(any, 11211).
@@ -106,12 +105,12 @@ parse_input(Socket, <<16#80:8, Opcode:8, KeySize:16, ExtrasSize:8, 16#00:8, 16#0
         16#10 ->
             lists:foreach(
                 fun({K, V}) ->
-                    ResponseBody = <<Extras:ExtrasSize/binary, K:(size(K))/binary, V/binary>>,
+                    ResponseBody = <<Extras:ExtrasSize/binary, K/binary, V/binary>>,
                     Response = <<16#81:8, Opcode:8, (size(K)):16, ExtrasSize:8, 16#00:8, 16#00:16, (size(ResponseBody)):32, 16#00:32, 16#00:64>>,
                     gen_tcp:send(Socket, Response),
                     gen_tcp:send(Socket, ResponseBody)
                 end,
-                [{X, heman:health(X)} || X <- heman:namespaces()]
+                [{X, list_to_binary(integer_to_list(heman:health(X)))} || X <- heman:namespaces()]
             ),
             ResponseBody = <<Extras:ExtrasSize/binary, Key:KeySize/binary, <<>>/binary>>,
             Response = <<16#81:8, Opcode:8, KeySize:16, ExtrasSize:8, 16#00:8, 16#00:16, (size(ResponseBody)):32, 16#00:32, 16#00:64>>,

@@ -27,4 +27,3 @@ Lastly, the web interface is provided to give a quick view into the health of th
 
  * Create process and code that periodically prunes old data.
  * Create event log and process health periodically into that log.
-

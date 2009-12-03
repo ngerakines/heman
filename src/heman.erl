@@ -123,6 +123,8 @@ get_app_version(AppName) ->
 rule_set(Key, Rule) ->
     rule_set(Key, Rule, undefined).
 
+rule_set(Key, Rule, DisplayName) when is_list(Key), is_list(Rule) ->
+    rule_set(list_to_binary(Key), list_to_binary(Rule), DisplayName);
 rule_set(Key, Rule, DisplayName) ->
     case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {rule, {set, Key, Rule, DisplayName}}, 5000) of
         {ok, ok} -> ok;
@@ -144,17 +146,21 @@ health_set(Namespace, Priority, Key, Rules) ->
         Other -> Other
     end.
 
+health_get(N) when is_list(N) -> health_get(list_to_binary(N));
 health_get(Namespace) ->
     case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {health, {get, Namespace}}, 5000) of
         {ok, Results} -> Results;
         Other -> Other
     end.
 
+health(N) when is_list(N) -> health(list_to_binary(N));
 health(Namespace) ->
     health_iter(Namespace, health_get(Namespace), 50).
 
 namespaces() ->
-    [].
+    lists:usort([begin
+        {Namespace, _} = Rule#rule.key, Namespace
+    end || Rule <- rule_get()]).
 
 %% -
 %% Stats
@@ -167,6 +173,8 @@ stat_set(Namespace, Key, Value) ->
         Other -> Other
     end.
 
+stat_get(N, K) when is_list(N) -> stat_get(list_to_binary(N), K);
+stat_get(N, K) when is_list(K) -> stat_get(N, list_to_binary(K));
 stat_get(Namespace, Key) ->
     case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {stat, {get, Namespace, Key}}, 5000) of
         {ok, Stats} -> Stats;
@@ -192,6 +200,10 @@ log_set(_Namespace, _Date, _Reason) ->
 %% Internals
 
 health_iter(_, [], Acc) -> Acc;
+health_iter(Namespace, Rules, Acc) when Acc > 100 ->
+    health_iter(Namespace, Rules, 100);
+health_iter(Namespace, Rules, Acc) when Acc < 0 ->
+    health_iter(Namespace, Rules, 0);
 health_iter(Namespace, [Rule | Rules], Acc) ->
     Data = stat_get(Namespace, Rule#health.key),
     NewAcc = health_rule_iter(Namespace, Rule#health.rules, Data, Acc),
@@ -209,19 +221,22 @@ health_rule_iter(Health, [Rule | Rules], Data, Acc) ->
         continue -> health_rule_iter(Health, Rules, Data, Acc)
     end.
 
-%% TODO: Abstrack the data augment code into a different function.
-result({hours, Hours, sum}, CRule, RRule, Data) ->
-    StopDate = calendar:datetime_to_gregorian_seconds({date(), time()}) - (60 * 60 * Hours),
-    SegmentedData = lists:filter(
-        fun(X) -> calendar:datetime_to_gregorian_seconds(X#stat.fordate) >= StopDate end,
-        Data
-    ),
+%% TODO: Abstract the data augment code into a different function.
+result({UnitType, Units, sum}, CRule, RRule, Data) when UnitType == hours; UnitType == minutes ->
+    StopDateA = case UnitType of hours -> 60 * 60 * Units; minutes -> 60 * Units end,
+    StopDate = calendar:datetime_to_gregorian_seconds({date(), time()}) - StopDateA,
+    SegmentedData = lists:filter(fun(X) ->
+        calendar:datetime_to_gregorian_seconds(X#stat.fordate) >= StopDate
+    end, Data),
     Sum = lists:foldl(fun(X, Acc) -> Acc + X#stat.value end, 0, SegmentedData),
-    case CRule of
-        {over, Amount} when Sum > Amount -> apply_rule(RRule);
-        {under, Amount} when Sum < Amount -> apply_rule(RRule);
-        _ -> continue
-    end.
+    collect_result(RRule, Sum, CRule).
+
+collect_result(ResultRule, Result, {over, Amount}) when Result > Amount ->
+    apply_rule(ResultRule);
+collect_result(ResultRule, Result, {under, Amount}) when Result < Amount ->
+    apply_rule(ResultRule);
+collect_result(_, _, _) ->
+    continue.
 
 apply_rule({increase, N}) -> {stop, N};
 apply_rule({decrease, N}) -> {stop, -N}.

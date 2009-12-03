@@ -73,7 +73,8 @@ server_loop() ->
             gen:reply(From, ok);
         %% Stats
         {'$heman_db_server', From, {stat, {set, Namespace, Key, Value}}} ->
-            DBKey = {date(), time(), Namespace, Key},
+            {H, M, _} = time(),
+            DBKey = {date(), {H, M, 0}, Namespace, Key},
             mnesia:transaction(fun() ->
                 case mnesia:wread({stat, DBKey}) of
                     [OldStat] ->
@@ -82,7 +83,7 @@ server_loop() ->
                     [] ->
                         mnesia:write(#stat{
                             pkey = DBKey,
-                            fordate = {date(), time()},
+                            fordate = {date(), {H, M, 0}},
                             namespace = Namespace,
                             key = Key,
                             value = Value

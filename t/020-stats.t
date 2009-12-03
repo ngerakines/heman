@@ -28,9 +28,10 @@ main(_) ->
         etap:is(heman:stat_set(<<"movies">>, <<"comedy">>, 1), ok, "rule 2 executed"),
         etap:is(heman:stat_set(<<"movies">>, <<"comedy">>, 1), ok, "rule 2 executed (again)"),
         Stats = [{<<"movies">>, <<"comedy">>, 2}, {<<"movies">>, <<"action">>, 1}],
+        {H,M,_} = time(),
         Results = [
-            {stat,{date(),time(),<<"movies">>,<<"action">>},{date(),time()},<<"movies">>,<<"action">>,1},
-            {stat,{date(),time(),<<"movies">>,<<"comedy">>},{date(),time()},<<"movies">>,<<"comedy">>,2}
+            {stat,{date(),{H,M,0},<<"movies">>,<<"action">>},{date(),{H,M,0}},<<"movies">>,<<"action">>,1},
+            {stat,{date(),{H,M,0},<<"movies">>,<<"comedy">>},{date(),{H,M,0}},<<"movies">>,<<"comedy">>,2}
         ],
         etap:is(lists:sort(heman:stat_get()), lists:sort(Results), "stats exist"),
         etap:is((hd(heman:stat_get(<<"movies">>, <<"comedy">>)))#stat.value, 2, "getting value of rule 2"),
