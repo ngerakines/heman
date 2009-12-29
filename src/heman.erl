@@ -61,6 +61,15 @@ start_phase(mnesia, _, _) ->
     ok;
 
 start_phase(populate_rules, _, _) ->
+    heman:rule_set({<<"heman_meta">>, <<"stat_set">>}, increase),
+    heman:health_set(<<"heman_meta">>, 1, <<"stat_set">>, [
+        {{hours, 6, sum}, {under, 1000}, {decrease, 10}},
+        {{hours, 6, sum}, {range, 1000, 10000}, {decrease, 5}},
+        {{hours, 6, sum}, {range, 10000, 100000}, {increase, 5}},
+        {{hours, 6, sum}, {range, 100000, 540000}, {increase, 10}},
+        {{hours, 6, sum}, {range, 540000, 600000}, {increase, 20}},
+        {{hours, 6, sum}, {over, 600000}, {decrease, 30}}
+    ]),
     [ heman:rule_set(Key, Rule, DisplayName)  || {Key, Rule, DisplayName} <- env_key(rules, [])],
     ok.
 
@@ -168,10 +177,15 @@ namespaces() ->
 stat_set(N, K, V) when is_list(N) -> stat_set(list_to_binary(N), K, V);
 stat_set(N, K, V) when is_list(K) -> stat_set(N, list_to_binary(K), V);
 stat_set(Namespace, Key, Value) ->
-    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {stat, {set, Namespace, Key, Value}}, 5000) of
+    Resp = case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {stat, {set, Namespace, Key, Value}}, 5000) of
         {ok, ok} -> ok;
         Other -> Other
-    end.
+    end,
+    stat_set_internal(),
+    Resp.
+
+stat_set_internal() ->
+    gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {stat, {set, <<"heman_meta">>, <<"stat_set">>, 1}}, 5000).
 
 stat_get(N, K) when is_list(N) -> stat_get(list_to_binary(N), K);
 stat_get(N, K) when is_list(K) -> stat_get(N, list_to_binary(K));
@@ -222,6 +236,15 @@ health_rule_iter(Health, [Rule | Rules], Data, Acc) ->
     end.
 
 %% TODO: Abstract the data augment code into a different function.
+result({avm, {Units, UnitType}}, CRule, RRule, Data) when Units > 0 ->
+    StopDateA = case UnitType of hours -> 60 * 60 * Units; minutes -> 60 * Units end,
+    StopDate = calendar:datetime_to_gregorian_seconds({date(), time()}) - StopDateA,
+    SegmentedData = lists:filter(fun(X) ->
+        calendar:datetime_to_gregorian_seconds(X#stat.fordate) >= StopDate
+    end, Data),
+    Sum = lists:foldl(fun(X, Acc) -> Acc + X#stat.value end, 0, SegmentedData),
+    Value = erlang:round(Sum / Units),
+    collect_result(RRule, Value, CRule);
 result({UnitType, Units, sum}, CRule, RRule, Data) when UnitType == hours; UnitType == minutes ->
     StopDateA = case UnitType of hours -> 60 * 60 * Units; minutes -> 60 * Units end,
     StopDate = calendar:datetime_to_gregorian_seconds({date(), time()}) - StopDateA,
@@ -231,12 +254,19 @@ result({UnitType, Units, sum}, CRule, RRule, Data) when UnitType == hours; UnitT
     Sum = lists:foldl(fun(X, Acc) -> Acc + X#stat.value end, 0, SegmentedData),
     collect_result(RRule, Sum, CRule).
 
+collect_result(ResultRule, Result, {is, Amount}) when Result == Amount ->
+    apply_rule(ResultRule);
+collect_result(ResultRule, Result, {isnt, Amount}) when Result =/= Amount ->
+    apply_rule(ResultRule);
 collect_result(ResultRule, Result, {over, Amount}) when Result > Amount ->
     apply_rule(ResultRule);
 collect_result(ResultRule, Result, {under, Amount}) when Result < Amount ->
+    apply_rule(ResultRule);
+collect_result(ResultRule, Result, {range, A, B}) when Result >= A, Result =< B ->
     apply_rule(ResultRule);
 collect_result(_, _, _) ->
     continue.
 
 apply_rule({increase, N}) -> {stop, N};
 apply_rule({decrease, N}) -> {stop, -N}.
+
