@@ -36,6 +36,7 @@
     rule_get/0,
     stat_get/0,
     health/1,
+    health_and_logs/1,
     health_set/4,
     health_get/1,
     log_get/1,
@@ -77,7 +78,8 @@ init(_) ->
     {ok, {{one_for_one, 10, 10}, [
         {heman_db, {heman_db, start, []}, permanent, 5000, worker, [heman_db]},
         {heman_web, {heman_web, start, []}, permanent, 5000, worker, [heman_web]},
-        {heman_tcp, {heman_tcp, start, []}, permanent, 5000, worker, [heman_tcp]}
+        {heman_tcp, {heman_tcp, start, []}, permanent, 5000, worker, [heman_tcp]},
+        {heman_health, {heman_health, start, []}, permanent, 5000, worker, [heman_health]}
     ]}}.
 
 env_key(Key) -> env_key(Key, undefined).
@@ -103,18 +105,14 @@ build_rel() ->
     ok.
 
 reload() ->
-    Modules = [
-        heman,
-        heman_db,
-        heman_web
-    ],
+    Modules = [heman, heman_db, heman_web, heman_tnamespace, heman_troot],
     [begin
-        case code:soft_purge(X) of
+        case code:soft_purge(M) of
             true -> ok;
-            false -> code:purge(X)
+            false -> code:purge(M)
         end,
-        code:load_abs("./ebin/" ++ atom_to_list(X))
-    end || X <- Modules].
+        code:load_file(M)
+    end || M <- Modules].
 
 get_app_version(AppName) ->
     case code:lib_dir(AppName) of
@@ -164,7 +162,12 @@ health_get(Namespace) ->
 
 health(N) when is_list(N) -> health(list_to_binary(N));
 health(Namespace) ->
-    health_iter(Namespace, health_get(Namespace), 50).
+    {Logs, Score} = health_iter(Namespace, health_get(Namespace), {[], 50}),
+    Score.
+
+health_and_logs(N) when is_list(N) -> health_and_logs(list_to_binary(N));
+health_and_logs(N) when is_binary(N) ->
+    health_iter(N, health_get(N), {[], 50}).
 
 namespaces() ->
     lists:usort([begin
@@ -214,25 +217,29 @@ log_set(_Namespace, _Date, _Reason) ->
 %% Internals
 
 health_iter(_, [], Acc) -> Acc;
-health_iter(Namespace, Rules, Acc) when Acc > 100 ->
-    health_iter(Namespace, Rules, 100);
-health_iter(Namespace, Rules, Acc) when Acc < 0 ->
-    health_iter(Namespace, Rules, 0);
-health_iter(Namespace, [Rule | Rules], Acc) ->
+health_iter(Namespace, Rules, {Logs, Score}) when Score > 100 ->
+    health_iter(Namespace, Rules, {Logs, Score});
+health_iter(Namespace, Rules, {Logs, Score}) when Score < 0 ->
+    health_iter(Namespace, Rules, {Logs, 0});
+health_iter(Namespace, [Rule | Rules], {Logs, Score}) ->
     Data = stat_get(Namespace, Rule#health.key),
-    NewAcc = health_rule_iter(Namespace, Rule#health.rules, Data, Acc),
-    health_iter(Namespace, Rules, NewAcc).
+    Change = health_rule_iter(Namespace, Rule#health.rules, Data),
+    NewLogs = case Change of
+        0 -> Logs;
+        _ -> [lists:flatten(io_lib:format("~s ~w", [Rule#health.key, Change])) | Logs]
+    end,
+    health_iter(Namespace, Rules, {NewLogs, Score + Change}).
 
 %% What data do you need?
 %% What is the condition?
 %% What is the result?
 %% What is the default result?
-health_rule_iter(_, [], _, Acc) -> Acc;
-health_rule_iter(Health, [Rule | Rules], Data, Acc) ->
+health_rule_iter(_, [], _) -> 0;
+health_rule_iter(Health, [Rule | Rules], Data) ->
     {DRule, CRule, RRule} = Rule,
     case result(DRule, CRule, RRule, Data) of
-        {stop, N} -> Acc + N;
-        continue -> health_rule_iter(Health, Rules, Data, Acc)
+        {stop, N} -> N;
+        continue -> health_rule_iter(Health, Rules, Data)
     end.
 
 %% TODO: Abstract the data augment code into a different function.

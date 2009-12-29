@@ -23,11 +23,10 @@
 					</td>
 				</tr>
 			</table>
-			<ul>
-			<% [ show_rule(Key) || Key <- Keys ] %>
-			</ul>
 			<% [stats_table(Key, Stat) || {Key, Stat} <- Stats] %>
 		</div>
+<hr />
+<center>Heman is <a href="http://github.com/ngerakines/heman">open source</a>.</center>
 	</body>
 </html>
 <%@ display_project({Namespace, Score}) when Score > 89 %><div class="info"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>Healthy</strong> (<% integer_to_list(Score) %>).</div>
@@ -36,12 +35,12 @@
 <%@ display_logs([]) %>
 <p>There are no recent log entries for this namespace.</p>
 <%@ display_logs(Logs) %>
-<% [ display_log(Class, Status, Date, Entries) || {Class, Status, Date, Entries} <- Logs] %>
+<% display_entries(Logs) %>
+<%! [ display_log(Class, Status, Date, Entries) || {Class, Status, Date, Entries} <- Logs] %>
 <%@ display_log(Class, Status, Date, Entries) %>
 <p class="<% Class %>">
 	<!-- It'd be really cool if we could left-align the status and right-align the date. -->
 	<strong><% Status %></strong><small><% Date %></small>
-	<% display_entries(Entries) %>
 </p>
 <%@ display_entries([]) %>
 <%@ display_entries(Entries) %>
@@ -49,14 +48,23 @@
 <%@ display_entry(Entry) %><li><% Entry %></li>
 <%@ show_rule(Key) %><li><% Key %></li>
 <%@ stats_table(Key, Stats) %>
+<%?
+    FirstFive = case length(Stats) of
+        N when N > 5 -> lists:nthtail(N - 5, Stats);
+         _ -> Stats
+    end
+%>
 <h1><% Key %></h1>
-<table width="200"><% [show_stats(Stat) || Stat <- Stats] %></table>
+<table>
+<tr>
+<td><table width="200"><% lists:reverse([show_stats(Stat) || Stat <- FirstFive]) %></table></td>
+<td>
+<img src="<% heman_web:chart_url(Stats) %>" />
+</td>
+</tr>
+</table>
 <%@ show_stats({{_, {H,M,_}} ,NS, Key, Value}) %>
 <tr>
 <td align="left"><% integer_to_list(H) %>:<% integer_to_list(M) %></td>
-<!--
-<td><% NS %></td>
-<td><% Key %></td>
--->
 <td align="right"><% integer_to_list(Value) %></td>
 </tr>
