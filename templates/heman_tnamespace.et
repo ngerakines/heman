@@ -50,7 +50,7 @@
 <%@ stats_table(Key, Stats) %>
 <%?
     FirstFive = case length(Stats) of
-        N when N > 5 -> lists:nthtail(N - 5, Stats);
+        N when N > 5 -> {X, _} = lists:split(5, Stats), X;
          _ -> Stats
     end
 %>

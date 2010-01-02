@@ -49,9 +49,9 @@ handle(['GET', Namespace], Req) ->
     Rules = heman:rule_get(),
     Keys = lists:usort([ Key || #rule{ key = {NS, Key}} <- Rules, NS == list_to_binary(Namespace) ]),
     Stats = [begin
-        Dataset = lists:keysort(1, [begin
+        Dataset = [begin
             {Stat#stat.fordate, Stat#stat.namespace, Stat#stat.key, Stat#stat.value}
-        end || Stat <- heman:stat_get(Namespace, Key)]),
+        end || Stat <- lists:reverse(lists:keysort(2, heman:stat_get(Namespace, Key)))],
         {Key, Dataset}
     end || Key <- Keys],
     Body = erlang:iolist_to_binary(heman_tnamespace:main({Namespace, Score}, Logs, Keys, Stats)),
@@ -62,10 +62,10 @@ handle(_, Req) ->
 
 chart_url(Stats) ->
     Values = case length(Stats) of
-        N when N > 100 -> [Value || {_ , _, _, Value} <- lists:nthtail(N - 100, Stats)];
-        _ -> [Value || {_ , _, _, Value} <- Stats]
+        N when N > 100 -> {X, _} = lists:split(100, Stats), lists:reverse([Value || {_ , _, _, Value} <- X]);
+        _ -> lists:reverse([Value || {_ , _, _, Value} <- Stats])
     end,
-    Max = lists:max(Values),
+    Max = case Values of [] -> 0; _ -> lists:max(Values) end,
     "http://chart.apis.google.com/chart?chs=200x125&cht=ls&chco=0077CC&chd=t:" ++ string:join([ integer_to_list(V) || V <- Values], ",") ++ "&chds=0," ++ integer_to_list(Max).
     %% {Max, Encoded} = encode_values(Values, 0, ""),
     %% "http://chart.apis.google.com/chart?chs=200x125&cht=ls&chco=0077CC&chd=e:" ++ Encoded ++ "&chds=0," ++ integer_to_list(Max + 1).
