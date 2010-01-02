@@ -47,6 +47,7 @@
 <ul><% [display_entry(Entry) || Entry <- Entries] %></ul>
 <%@ display_entry(Entry) %><li><% Entry %></li>
 <%@ show_rule(Key) %><li><% Key %></li>
+<%@ stats_table(_, []) %>
 <%@ stats_table(Key, Stats) %>
 <%?
     FirstFive = case length(Stats) of
