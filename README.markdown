@@ -1,29 +1,60 @@
 # About
 
-Heman is an application health monitoring system for application-level health. This project is alpha quality software and shouldn't be used yet.
+Heman is an application health monitoring system for application-level health.
 
 # Goals
 
  * Provide short-term (1 hour, 3 hour, 12 hour, 24 hour, 48 hour) views of application specific usage.
  * Allow developers to create 'rules' that help discern overall application health.
- * Create a clean, easy to read interface to describe application health.
+ * Create a clean, easy to read interface to convey application health.
 
-*What it is NOT*:
+Heman isn't intended to be used as a nagios or cacti replacement.
 
- * A throttling system or framework.
- * A nagios or cacti replacement.
+# The Basics
 
-# How does it work?
+A *rule* is a stat or data-point that is traced. It could be an incrementing rule that counts the number of users processed by a queue worker or the maximum size of a queue. There are different types of rules like increment, set, maximum and minimum that can be used. Rules are organized by namespace and have user-friendly descriptions.
 
-The key concept here are stats and how they affect the health score of an application. When heman is started, a number of rules are registered that tell heman how to process certain stats. An example rule could be "queuelength" under the namespace "queues" with a rule type of "replace".
+    1> heman:rule_set({<<"cerlan_data">>, <<"users_processed">>}, increase, "Users Processed").
+    ok
+    1> heman:rule_set({<<"cerlan_data">>, <<"user_queue">>}, max, "User Queue Max").
+    ok
 
-As your application operates, it would call the heman:set/3 function to register important stats. For example, every few executions of a queue worker could make a call to `heman:set("queue", "queuelength", N)` to register the current queue length.
+A *stat* represents a given data-point that is applicable to a rule. All data collected by stat calls are aggregated into the minute that it was received. This gives us a measurable window of time in which we can apply health checks. By default, if a stat is set for a namespace and key that isn't know, it is recorded and the default 'increase' type is applied.
 
-There is another set of rules called "health" that look at recent data and figure out how to assign a health score to a namespace. A health score is between 0 and 100, 0 being very unhealth or fatal and 100 being ideal. A health rule consists of a namespace, key, condition and a result. A condition may be something like "if over 100 return fatal" or "if under 10 add +10". By default, the health score for a namespace is 50 and the health rules can immediately return a score or increase/decrease the score.
+    1> heman:stat_set(<<"cerlan_data">>, <<"users_processed">>, 1).
+    ok
+    ...
+    403> heman:stat_set(<<"cerlan_data">>, <<"users_processed">>, 1).
+    ok
+
+*Health* is a score between 0 and 100 that is derived from the rules that exist for a namespace and the data collected through stat calls within that namespace. A namespace is considered to be in "poor" health when the health score drops below 50, "ok" health at below 70 and "good" health above 70. This scale is subject to change.
+
+    1> Rules = [{{hours, 1, sum}, {under, 100}, {decrease, 20}}, {{hours, 1, sum}, {over, 200}, {increase, 20}}].
+    [{{hours, 1, sum}, {under, 100}, {decrease, 20}}, {{hours, 1, sum}, {over, 200}, {increase, 20}}]
+    2> heman:health_set(<<"cerlan_data">>, 1, <<"users_processed">>, Rules).
+    ok
+    3> heman:health(<<"cerlan_data">>).
+    70
 
 Lastly, the web interface is provided to give a quick view into the health of the namespaces tracked. The web interface generates an event log every few minutes and can show recent trends.
 
-# Tasks
+# Non-Erlang Implementation
 
- * Create process and code that periodically prunes old data.
- * Create event log and process health periodically into that log.
+Heman provides a binary memcached service that can be accessed by most current Memcached clients.
+
+# Change log and development plan
+
+0.0.1: Released
+
+* Base framework
+* Memcached protocol
+* Basic namespaces
+* Basic rules and health rules
+* Basic web pages
+
+0.0.2: In Development
+
+* Aggregate health rules: e.g. When sum of a over 2 hours is greater than the sum of b over 2 hours then execute on X.
+* Regular tasks to survey health: Poll namespaces every n minutes and store health and health reasons.
+* Health logs: When health is surveyed, create logs of the namespace, score and reasons.
+* Data purging: Delete all data older than N hours. 
