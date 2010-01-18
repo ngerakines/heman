@@ -1,4 +1,4 @@
-%% Copyright (c) 2009 Nick Gerakiens <nick@gerakines.net>
+%% Copyright (c) 2009,2010 Nick Gerakiens <nick@gerakines.net>
 %% 
 %% Permission is hereby granted, free of charge, to any person
 %% obtaining a copy of this software and associated documentation
@@ -45,7 +45,7 @@ handle(['GET', "favicon.ico"], Req) ->
     Req:respond({404, [{"Content-Type", "text/html"}], <<"">>});
 
 handle(['GET', Namespace], Req) ->
-    {Logs, Score} = heman:health_and_logs(Namespace),
+	Logs = heman:log_get(Namespace),
     Rules = heman:rule_get(),
     Keys = lists:usort([ Key || #rule{ key = {NS, Key}} <- Rules, NS == list_to_binary(Namespace) ]),
     Stats = [begin
@@ -54,7 +54,7 @@ handle(['GET', Namespace], Req) ->
         end || Stat <- lists:reverse(lists:keysort(2, heman:stat_get(Namespace, Key)))],
         {Key, Dataset}
     end || Key <- Keys],
-    Body = erlang:iolist_to_binary(heman_tnamespace:main({Namespace, Score}, Logs, Keys, Stats)),
+    Body = erlang:iolist_to_binary(heman_tnamespace:main(Keys, Stats, Logs)),
     Req:respond({200, [{"Content-Type", "text/html"}], Body});
 
 handle(_, Req) ->

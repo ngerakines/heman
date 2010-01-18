@@ -16,10 +16,11 @@ main(_) ->
         etap:is(heman:rule_set({<<"movies">>, <<"action">>}, increase), ok, "rule 1 created"),
         etap:is(heman:rule_set({<<"movies">>, <<"comedy">>}, increase), ok, "rule 2 created"),
         Rules = [
+	        {rule,{<<"heman_meta">>,<<"stat_set">>}, increase, "Number of stat calls made."},
             {rule,{<<"movies">>,<<"action">>},increase, undefined},
             {rule,{<<"movies">>,<<"comedy">>},increase, undefined}
         ],
-        etap:is(heman:rule_get(), Rules, "rules exist"),
+        etap:is(lists:sort(heman:rule_get()), Rules, "rules exist"),
         ok
     end)(),
 
@@ -30,6 +31,7 @@ main(_) ->
         Stats = [{<<"movies">>, <<"comedy">>, 2}, {<<"movies">>, <<"action">>, 1}],
         {H,M,_} = time(),
         Results = [
+        	{stat,{date(),{H,M,0},<<"heman_meta">>,<<"stat_set">>},{date(),{H,M,0}},<<"heman_meta">>,<<"stat_set">>,3},
             {stat,{date(),{H,M,0},<<"movies">>,<<"action">>},{date(),{H,M,0}},<<"movies">>,<<"action">>,1},
             {stat,{date(),{H,M,0},<<"movies">>,<<"comedy">>},{date(),{H,M,0}},<<"movies">>,<<"comedy">>,2}
         ],

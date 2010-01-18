@@ -1,4 +1,4 @@
-<%@ main(Score, Logs, Keys, Stats) %>
+<%@ main(Keys, Stats, History) %>
 <html>
 	<head>
 		<title>Status</title>
@@ -13,20 +13,11 @@
 	<body>
 		<div class="content">
 			<p><a href="../">Index</a></p>
-			<table>
-				<tr>
-					<td><% display_project(Score) %></td>
-				</tr>
-				<tr>
-					<td>
-						<% display_logs(Logs) %>
-					</td>
-				</tr>
-			</table>
+			<% [history_table(Log) || Log <- History ] %>
 			<% [stats_table(Key, Stat) || {Key, Stat} <- Stats] %>
 		</div>
-<hr />
-<center>Heman is <a href="http://github.com/ngerakines/heman">open source</a>.</center>
+		<hr />
+		<center>Heman is <a href="http://github.com/ngerakines/heman">open source</a>.</center>
 	</body>
 </html>
 <%@ display_project({Namespace, Score}) when Score > 89 %><div class="info"><a href="/<% Namespace %>"><% Namespace %></a> is <strong>Healthy</strong> (<% integer_to_list(Score) %>).</div>
@@ -69,3 +60,17 @@
 <td align="left"><% integer_to_list(H) %>:<% integer_to_list(M) %></td>
 <td align="right"><% integer_to_list(Value) %></td>
 </tr>
+<%@ history_table({log, _, {{Y,M,D}, {H,MM,S}}, Namespace, Score, Logs}) %>
+<table>
+	<tr>
+		<td><% display_project({Namespace, Score}) %></td>
+	</tr>
+	<tr>
+		<td><p>Last change on <% integer_to_list(Y) %>-<% integer_to_list(M) %>-<% integer_to_list(D) %> <% integer_to_list(H) %>:<% integer_to_list(MM) %>:<% integer_to_list(S) %></p></td>
+	</tr>
+	<tr>
+		<td>
+			<% display_logs(Logs) %>
+		</td>
+	</tr>
+</table>

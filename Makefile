@@ -23,8 +23,8 @@ cover: all
 
 templates: 
 	mkdir -p ./ebin/
-	erl -noshell -eval "erltl:compile(\"./templates/heman_troot.et\", [{outdir, \"./ebin\"}, report_errors, report_warnings, nowarn_unused_vars])." -s init stop
-	erl -noshell -eval "erltl:compile(\"./templates/heman_tnamespace.et\", [{outdir, \"./ebin\"}, report_errors, report_warnings, nowarn_unused_vars])." -s init stop
+	erl -pa ./ebin/ -noshell -eval "erltl:compile(\"./templates/heman_troot.et\", [{outdir, \"./ebin\"}, report_errors, report_warnings, nowarn_unused_vars])." -s init stop
+	erl -pa ./ebin/ -noshell -eval "erltl:compile(\"./templates/heman_tnamespace.et\", [{outdir, \"./ebin\"}, report_errors, report_warnings, nowarn_unused_vars])." -s init stop
 
 clean:
 	(cd src;$(MAKE) clean)

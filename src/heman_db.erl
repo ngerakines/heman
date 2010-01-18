@@ -1,4 +1,4 @@
-%% Copyright (c) 2009 Nick Gerakiens <nick@gerakines.net>
+%% Copyright (c) 2009,2010 Nick Gerakiens <nick@gerakines.net>
 %% 
 %% Permission is hereby granted, free of charge, to any person
 %% obtaining a copy of this software and associated documentation
@@ -38,7 +38,22 @@ init(Parent) ->
     heman_db:server_loop().
 
 server_loop() ->
-    receive
+	receive
+		%% Logs
+		{'$heman_db_server', From, {log, {add, Namespace, Score, Messages}}} ->
+            mnesia:transaction(fun() -> mnesia:write(#log{
+                pkey = {Namespace, {date(), time()}},
+                fordate = {date(), time()},
+                namespace = Namespace,
+                health = Score, 
+                messages = Messages
+            }) end),
+            gen:reply(From, ok);
+		{'$heman_db_server', From, {log, {get, Namespace}}} ->
+			Logs = mnesia:activity(transaction, fun() ->
+                qlc:e( qlc:q([R || R <- mnesia:table(log), R#log.namespace == Namespace ]) )
+            end),
+            gen:reply(From, Logs);
         %% Health
         {'$heman_db_server', From, {health, {get, Namespace}}} ->
             Rules = mnesia:activity(transaction, fun() ->

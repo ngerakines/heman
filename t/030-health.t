@@ -16,6 +16,7 @@ main(_) ->
         etap:is(heman:rule_set({<<"harvest">>, <<"grain_harvested">>}, increase), ok, "rule 1 created"),
         etap:is(heman:rule_set({<<"harvest">>, <<"rice_harvested">>}, increase), ok, "rule 2 created"),
         Rules = [
+	        {rule,{<<"heman_meta">>,<<"stat_set">>}, increase, "Number of stat calls made."},
             {rule,{<<"harvest">>,<<"grain_harvested">>},increase, undefined},
             {rule,{<<"harvest">>,<<"rice_harvested">>},increase, undefined}
         ],

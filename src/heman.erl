@@ -1,4 +1,4 @@
-%% Copyright (c) 2009 Nick Gerakiens <nick@gerakines.net>
+%% Copyright (c) 2009,2010 Nick Gerakiens <nick@gerakines.net>
 %% 
 %% Permission is hereby granted, free of charge, to any person
 %% obtaining a copy of this software and associated documentation
@@ -23,11 +23,8 @@
 -module(heman).
 -behaviour(application).
 
-%% exports: Application behvior, supervisor
 -export([start/2, stop/1, start_phase/3, init/1]).
-%% exports: build, misc
--export([env_key/1, env_key/2, build_rel/0, reload/0]).
-%% exports: interface
+-export([env_key/1, env_key/2, build_rel/0, reload/0, stat_set_internal/3]).
 -export([
     stat_set/3,
     stat_get/2,
@@ -46,7 +43,6 @@
 
 -include("heman.hrl").
 
-%% NKG: Before starting, it's a good idea to net_adm:world(), pg2:which_groups() and global:sync()
 start(_, _) ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
@@ -62,7 +58,8 @@ start_phase(mnesia, _, _) ->
     ok;
 
 start_phase(populate_rules, _, _) ->
-    heman:rule_set({<<"heman_meta">>, <<"stat_set">>}, increase),
+    heman:rule_set({<<"heman_meta">>, <<"stat_set">>}, increase, "Number of stat calls made."),
+    heman:rule_set({<<"heman_meta">>, <<"health_loop">>}, increase, "Health aggregator loops"),
     heman:health_set(<<"heman_meta">>, 1, <<"stat_set">>, [
         {{hours, 6, sum}, {under, 1000}, {decrease, 10}},
         {{hours, 6, sum}, {range, 1000, 10000}, {decrease, 5}},
@@ -162,7 +159,7 @@ health_get(Namespace) ->
 
 health(N) when is_list(N) -> health(list_to_binary(N));
 health(Namespace) ->
-    {Logs, Score} = health_iter(Namespace, health_get(Namespace), {[], 50}),
+    {_Logs, Score} = health_iter(Namespace, health_get(Namespace), {[], 50}),
     Score.
 
 health_and_logs(N) when is_list(N) -> health_and_logs(list_to_binary(N));
@@ -184,11 +181,11 @@ stat_set(Namespace, Key, Value) ->
         {ok, ok} -> ok;
         Other -> Other
     end,
-    stat_set_internal(),
+    stat_set_internal(<<"heman_meta">>, <<"stat_set">>, 1),
     Resp.
 
-stat_set_internal() ->
-    gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {stat, {set, <<"heman_meta">>, <<"stat_set">>, 1}}, 5000).
+stat_set_internal(NS, K, V) ->
+    gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {stat, {set, NS, K, V}}, 5000).
 
 stat_get(N, K) when is_list(N) -> stat_get(list_to_binary(N), K);
 stat_get(N, K) when is_list(K) -> stat_get(N, list_to_binary(K));
@@ -207,11 +204,18 @@ stat_get() ->
 %% -
 %% Logs
 
-log_get(_Namespace) ->
-    [].
+log_get(Namespace) when is_list(Namespace) -> log_get(list_to_binary(Namespace));
+log_get(Namespace) ->
+	case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {log, {get, Namespace}}, 5000) of
+        {ok, Logs} -> Logs;
+        Other -> Other
+    end.
 
-log_set(_Namespace, _Date, _Reason) ->
-    ok.
+log_set(Namespace, Score, Messages) ->
+    case gen:call(pg2:get_closest_pid(heman_db), '$heman_db_server', {log, {add, Namespace, Score, Messages}}, 5000) of
+        {ok, ok} -> ok;
+        Other -> Other
+    end.
 
 %% -
 %% Internals

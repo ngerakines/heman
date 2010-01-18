@@ -42,3 +42,4 @@ write_loop(Key, Range, Sleep) ->
 status_loop() ->
     timer:sleep(1000 * 5),
     status_loop().
+
