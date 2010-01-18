@@ -8,7 +8,7 @@ Heman is an application health monitoring system for application-level health.
  * Allow developers to create 'rules' that help discern overall application health.
  * Create a clean, easy to read interface to convey application health.
 
-Heman isn't intended to be used as a nagios or cacti replacement.
+Heman isn't intended to be used as a nagios or cacti replacement. This project is inspired by the [Facebook Platform status page](http://developers.facebook.com/live_status.php).
 
 # The Basics
 
