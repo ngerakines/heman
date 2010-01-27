@@ -90,10 +90,10 @@ build_rel() ->
     Apps = [kernel, stdlib, sasl, crypto, inets, mnesia],
     {ok, FD} = file:open("heman.rel", [write]),
     RelInfo = {release,
-        {"heman", "0.0.1"},
-        get_app_version(erts), 
+        {"heman", "0.0.2"},
+        get_app_version(erts),
             [get_app_version(AppName) || AppName <- Apps] ++ [
-            {heman, "0.0.1"}
+            {heman, "0.0.2"}
         ]
     },
     io:format(FD, "~p.", [RelInfo]),
@@ -102,7 +102,7 @@ build_rel() ->
     ok.
 
 reload() ->
-    Modules = [heman, heman_db, heman_web, heman_tnamespace, heman_troot],
+    Modules = [heman, heman_db, heman_web, heman_health, heman_tcp, heman_tnamespace, heman_troot],
     [begin
         case code:soft_purge(M) of
             true -> ok;

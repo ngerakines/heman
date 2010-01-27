@@ -14,7 +14,8 @@ main(_) ->
         etap:is(heman:rule_set({<<"movies">>, <<"action">>}, increase, "Action Movies"), ok, "rule 1 created"),
         etap:is(heman:rule_set({<<"movies">>, <<"comedy">>}, increase, "Comedy Movies"), ok, "rule 2 created"),
         Rules = [
-        	{rule,{<<"heman_meta">>,<<"stat_set">>}, increase, "Number of stat calls made."},
+            {rule,{<<"heman_meta">>,<<"health_loop">>}, increase,"Health aggregator loops"},
+            {rule,{<<"heman_meta">>,<<"stat_set">>}, increase, "Number of stat calls made."},
             {rule,{<<"movies">>,<<"action">>}, increase, "Action Movies"},
             {rule,{<<"movies">>,<<"comedy">>}, increase, "Comedy Movies"}
         ],

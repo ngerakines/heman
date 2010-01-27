@@ -16,7 +16,8 @@ main(_) ->
         etap:is(heman:rule_set({<<"harvest">>, <<"grain_harvested">>}, increase), ok, "rule 1 created"),
         etap:is(heman:rule_set({<<"harvest">>, <<"rice_harvested">>}, increase), ok, "rule 2 created"),
         Rules = [
-	        {rule,{<<"heman_meta">>,<<"stat_set">>}, increase, "Number of stat calls made."},
+            {rule,{<<"heman_meta">>,<<"health_loop">>}, increase,"Health aggregator loops"},
+            {rule,{<<"heman_meta">>,<<"stat_set">>}, increase, "Number of stat calls made."},
             {rule,{<<"harvest">>,<<"grain_harvested">>},increase, undefined},
             {rule,{<<"harvest">>,<<"rice_harvested">>},increase, undefined}
         ],
@@ -32,7 +33,7 @@ main(_) ->
             {{hours, 24, sum}, {over, 50}, {increase, 10}}
         ],
         etap:is(heman:health_set(<<"harvest">>, 1, <<"grain_harvested">>, Rules1), ok, "health rule 1 created"),
-        etap:is(heman:health_set(<<"harvest">>, 2, <<"rice_harvested">>, Rules1), ok, "health rule 2 created"),        
+        etap:is(heman:health_set(<<"harvest">>, 2, <<"rice_harvested">>, Rules1), ok, "health rule 2 created"),
         Rules = [
             {health,{<<"harvest">>,<<"grain_harvested">>}, <<"harvest">>,1,<<"grain_harvested">>,Rules1},
             {health,{<<"harvest">>,<<"rice_harvested">>}, <<"harvest">>,2,<<"rice_harvested">>,Rules1}
