@@ -2,4 +2,5 @@
 
 aclocal
 automake --gnu --add-missing
+autoheader
 autoconf
