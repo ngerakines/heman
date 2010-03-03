@@ -1,60 +1,66 @@
-# About
+Heman is a small, portable daemon that exposes an interface to help you expose and understand application statistics over time. The ultimate goal is to allow application developers and consumers to determine the health of an application.
 
-Heman is an application health monitoring system for application-level health.
+Health is based on the number of rules that register bad, ok or good for a given namespace. The rules are registered Lua scripts for a given namespace key which allows developers and non-developers to easily create and manipulate rules.
 
-# Goals
+# Usage
 
- * Provide short-term (1 hour, 3 hour, 12 hour, 24 hour, 48 hour) views of application specific usage.
- * Allow developers to create 'rules' that help discern overall application health.
- * Create a clean, easy to read interface to convey application health.
+Heman stores rules on how to process incoming stats.
 
-Heman isn't intended to be used as a nagios or cacti replacement. This project is inspired by the [Facebook Platform status page](http://developers.facebook.com/live_status.php).
+    rule<"app_data", "user_processed"> = <"integer", "The number of users processed by our batch processing system over time.">
+    rule<"app_data", "users_per_batch"> = <"integer", "The number of users processed in a batch.">
+    rule<"app_data", "batch_processing_time_spent"> = <"time", "The amount of time required to process a batch of users"
 
-# The Basics
+As your application does it's thing, periodically stats are sent to Heman.
 
-A *rule* is a stat or data-point that is traced. It could be an incrementing rule that counts the number of users processed by a queue worker or the maximum size of a queue. There are different types of rules like increment, set, maximum and minimum that can be used. Rules are organized by namespace and have user-friendly descriptions.
+    update<"app_data", "user_processed"> = +1
+    update<"app_data", "user_processed"> = +1
+    set<"app_data", "users_per_batch"> = 2
+    set<"app_data", "batch_processing_time_spent"> = 15 minutes
 
-    1> heman:rule_set({<<"cerlan_data">>, <<"users_processed">>}, increase, "Users Processed").
-    ok
-    1> heman:rule_set({<<"cerlan_data">>, <<"user_queue">>}, max, "User Queue Max").
-    ok
+Health is determined by a few things, but mainly the output of rules entered into the system. Rules are written in lua and look something like this:
 
-A *stat* represents a given data-point that is applicable to a rule. All data collected by stat calls are aggregated into the minute that it was received. This gives us a measurable window of time in which we can apply health checks. By default, if a stat is set for a namespace and key that isn't know, it is recorded and the default 'increase' type is applied.
+    -- users_processed.lua
+    function main(users_processed_today)
+      if users_processed_today == 0 then
+        return 1, "No users processed."
+      else if users_processed_today < 50 then
+        return 2, "Some users processed but not many."
+      else if users_processed_today < 1000
+        return 3, "Lots of users processed, all good."
+      else
+        return 2, "Too many users processed."
+      end
+    end
+    main(input)
 
-    1> heman:stat_set(<<"cerlan_data">>, <<"users_processed">>, 1).
-    ok
-    ...
-    403> heman:stat_set(<<"cerlan_data">>, <<"users_processed">>, 1).
-    ok
+The output of the lua script directly impacts the health rule result. Two return values are expected by the application when executing a health script. The first is an integer representing the status where 1 is bad, 2 is ok and 3 is good. The second is a log message that is human readable.
 
-*Health* is a score between 0 and 100 that is derived from the rules that exist for a namespace and the data collected through stat calls within that namespace. A namespace is considered to be in "poor" health when the health score drops below 50, "ok" health at below 70 and "good" health above 70. This scale is subject to change.
+When creating a health rule, some hints are given to let it know what data to pass in and what processing should be applied before so.
 
-    1> Rules = [{{hours, 1, sum}, {under, 100}, {decrease, 20}}, {{hours, 1, sum}, {over, 200}, {increase, 20}}].
-    [{{hours, 1, sum}, {under, 100}, {decrease, 20}}, {{hours, 1, sum}, {over, 200}, {increase, 20}}]
-    2> heman:health_set(<<"cerlan_data">>, 1, <<"users_processed">>, Rules).
-    ok
-    3> heman:health(<<"cerlan_data">>).
-    70
+    health
+      rule_name: "user_processed"
+      lua: "users_processed.lua"
+      requires: <"app_data", "user_processed">
+      transform: sum value, range of 12 hours
 
-Lastly, the web interface is provided to give a quick view into the health of the namespaces tracked. The web interface generates an event log every few minutes and can show recent trends.
+    health
+      rule_name: "users_per_batch"
+      lua: "users_per_batch.lua"
+      requires: <"app_data", "users_per_batch">
+      transform: table
 
-# Non-Erlang Implementation
+The above hints used are 'sum value', 'range of N' and 'table'. The 'sum value' hint tells Heman to sum all of the collected data for the app\_data:user_processed namespace key. The 'range of N' says that only the past 12 hours of data needs to be collected and transformed. The 'table' hint is the default rule whereby all of the data is put into a Lua table in the form of a dictionary whereby the keys are the timestamps and the values are the values.
 
-Heman provides a binary memcached service that can be accessed by most current Memcached clients.
+Lastly, once the system is setup with rules, health rules and is collecting data then you'll want to see the results of that information in the form of health status and possibly graphs. When requesting the health of a namespace, all of the health rules are applied for that namespace and the output takes two forms. The first is a simple statistic of the number of good, ok and bad responses. The second is a breakdown of the log entries associated with those responses.
 
-# Change log and development plan
+    status<"app_data"> ->
+    "OK", [1, 1, 0]
 
-0.0.1: Released
+    logs<"app_data"> ->
+    [
+      ["Not much time required to process all users."],
+      ["Some users processed but not many."],
+      []
+    ]
 
-* Base framework
-* Memcached protocol
-* Basic namespaces
-* Basic rules and health rules
-* Basic web pages
-
-0.0.2: In Development
-
-* Aggregate health rules: e.g. When sum of a over 2 hours is greater than the sum of b over 2 hours then execute on X.
-* Regular tasks to survey health: Poll namespaces every n minutes and store health and health reasons.
-* Health logs: When health is surveyed, create logs of the namespace, score and reasons.
-* Data purging: Delete all data older than N hours. 
+When Heman is determining if application health is "GOOD", "OK" or "BAD", it uses the status group in which is highest with 0 rules below it. Hence "1,1,0" is "OK" whereby "5,0,1" is "BAD".
