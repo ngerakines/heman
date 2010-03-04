@@ -5,20 +5,29 @@
 #include <stdio.h>
 #include <string.h>
 
+struct ll_stat {
+	int value;
+	time_t when;
+	StatNode next;
+};
+
 DEFINE_HASHTABLE_INSERT(insert_some, struct store_key, struct store_value);
 DEFINE_HASHTABLE_SEARCH(search_some, struct store_key, struct store_value);
 DEFINE_HASHTABLE_REMOVE(remove_some, struct store_key, struct store_value);
 
-static unsigned int hash_from_key(void *ky) {
+// NKG: Yeah, so, this is the best I could do.
+unsigned int hash_from_key(void *ky) {
 	struct store_key *k = (struct store_key *)ky;
+	const char * s = k->key; // Need to account for namespace too.
 	unsigned int hash = 0;
-	int c;
-	while (c = *k->namespace++) {
-		hash = c + (hash << 6) + (hash << 16) - hash;
+	for(; *s; ++s) {
+		hash += *s;
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
 	}
-	while (c = *k->key++) {
-		hash = c + (hash << 6) + (hash << 16) - hash;
-	}
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+	hash += (hash << 15);
 	return hash;
 }
 
@@ -26,11 +35,11 @@ static int equal_keys(void *k1, void *k2) {
 	return (0 == memcmp(k1, k2, sizeof(struct store_key)));
 }
 
-struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int value, time_t when) {
-
+struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int value) {
 	if (h == NULL) {
 		h = create_hashtable(16, hash_from_key, equal_keys);
 		if (NULL == h) {
+			// NKG: Should I be calling `exit(-1)` here?
 			exit(-1);
 		}
 	}
@@ -38,7 +47,7 @@ struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int 
 	struct store_key *new_key;
 	new_key = (struct store_key *)malloc(sizeof(struct store_key));
 	if (NULL == new_key) {
-		printf("ran out of memory allocating a key\n");
+		// NKG: Should I just call `exit(1)` here?
 		return NULL;
 	}
 	new_key->namespace = namespace;
@@ -52,34 +61,34 @@ struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int 
 		key_value->key = key;
 		key_value->count = 1;
 		key_value->stats = NULL;
-		if (! insert_some(h, new_key, key_value)) {
+		if (hashtable_insert(h, new_key, key_value) != -1) {
+			// NKG: Should I be calling `exit(-1)` here?
 			exit(-1);
 		}
 	}
 
 	// We've got a valid key_value ref, now add the new stat. For now assume
 	// all ops are 'INCR'.
+	time_t now;
+	time(&now);
+
 	if (key_value->stats == NULL) {
-		printf("key_value->stats is NULL\n");
-		key_value->stats = create_stat(value, when);
+		StatNode *first;
+		first = create_stat(value, now);
+		key_value->stats = first;
 	} else {
-		// NKG: This is broken.
-		time_t now;
-		time(&now);
 		if (key_value->stats->when == now) {
-			printf("Incrementing value by %d\n", value);
-			key_value->stats += value;
+			key_value->stats->value += value;
 		} else {
-			printf("push new stat node onto key_value\n");
-			key_value->stats = push_stat(key_value->stats, value, when);
+			key_value->stats = push_stat(key_value->stats, value, now);
 		}
 	}
 
 	return h;
 }
 
-StatNode *create_stat(int value, time_t when) {
-	StatNode *node;
+StatNode create_stat(int value, time_t when) {
+	StatNode node;
 	if (! (node = malloc(sizeof(StatNode)))) {
 		return NULL;
 	}
@@ -89,35 +98,33 @@ StatNode *create_stat(int value, time_t when) {
 	return node;
 }
 
-StatNode *push_stat(StatNode *head, int value, time_t when) {
-	StatNode *new_head;
+StatNode push_stat(StatNode head, int value, time_t when) {
+	StatNode new_head;
 	new_head = create_stat(value, when);
 	new_head->next = head;
 	return new_head;
 }
 
-StatNode *last_for_nsk(struct hashtable *hash_table, char *namespace, char *key) {
+StatNode last_for_nsk(struct hashtable *hash_table, char *namespace, char *key) {
 	if (hash_table == NULL) {
-		printf("hash_table is NULL");
 		return NULL;
 	}
 	struct store_key *search_key;
 	search_key = (struct store_key *)malloc(sizeof(struct store_key));
 	if (search_key == NULL) {
-		printf("ran out of memory allocating a key\n");
+		// NKG: Should I just call `exit(1)` here?
 		return NULL;
 	}
 	search_key->namespace = namespace;
 	search_key->key = key;
 
 	struct store_value *key_value;
-
-	if (NULL == (key_value = search_some(hash_table, search_key))) {
-		free(search_key); // right?
-		printf("search_key found nothing... %s %s\n", namespace, key);
+	key_value = search_some(hash_table, search_key);
+	if (key_value == NULL) {
+		free(search_key);
 		return NULL;
 	}
-	free(search_key); // right?
+	free(search_key);
 
 	return key_value->stats;
 }

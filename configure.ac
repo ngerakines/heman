@@ -20,7 +20,6 @@ AC_PROG_LIBTOOL
 
 # Checks for libraries.
 
-AC_CHECK_LIB([avro], [avro_schema_from_json])
 AC_CHECK_LIB([m], [cos])
 AC_CHECK_LIB([pthread], [pthread_create])
 

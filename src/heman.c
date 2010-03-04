@@ -37,7 +37,6 @@ THE SOFTWARE.
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
-#include <avro.h>
 #include <event.h>
 
 #include "heman.h"
