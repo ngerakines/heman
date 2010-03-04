@@ -26,12 +26,6 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <string.h>
 
-struct ll_stat {
-	int value;
-	time_t when;
-	StatNode next;
-};
-
 DEFINE_HASHTABLE_INSERT(insert_some, struct store_key, struct store_value);
 DEFINE_HASHTABLE_SEARCH(search_some, struct store_key, struct store_value);
 DEFINE_HASHTABLE_REMOVE(remove_some, struct store_key, struct store_value);

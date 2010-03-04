@@ -30,7 +30,6 @@ DEFINE_HASHTABLE_INSERT(insert_rule, struct rule_key, struct rule_value);
 DEFINE_HASHTABLE_SEARCH(search_rules, struct rule_key, struct rule_value);
 DEFINE_HASHTABLE_REMOVE(remove_rule, struct rule_key, struct rule_value);
 
-// NKG: Yeah, so, this is the best I could do.
 unsigned int hash_rule(void *ky) {
 	RuleKey k = (RuleKey)ky;
 	char *s = k->key; // Need to account for namespace too.

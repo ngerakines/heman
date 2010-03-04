@@ -7,19 +7,13 @@
 #include "../src/stats.h"
 #include "../src/rules.h"
 
-struct ll_stat {
-	int value;
-	time_t when;
-	StatNode next;
-};
-
-START_TEST (test_empty_stats) {
+START_TEST (stats_empty) {
 	struct hashtable *a = NULL;
 	fail_unless(a == NULL, "empty hashtables are NULL.");
 	fail_unless(last_for_nsk(a, "foo", "bar") == NULL, "empty hts can't return keys.");
 } END_TEST
 
-START_TEST (test_single_stat) {
+START_TEST (stats_single) {
 	struct hashtable *b = NULL;
 	b = add_stat(b, "foo", "bar", 1);
 	fail_if(b == NULL, "creating a stat shouldn't return null");
@@ -34,7 +28,7 @@ START_TEST (test_single_stat) {
 	fail_unless(last->value == 2, "value should be one");
 } END_TEST
 
-START_TEST (test_several_stat) {
+START_TEST (stats_several) {
 	struct hashtable *b = NULL;
 	b = add_stat(b, "foo", "bar", 1);
 	b = add_stat(b, "foo", "bar", 1);
@@ -50,7 +44,7 @@ START_TEST (test_several_stat) {
 	fail_unless(last->value == 3, "foo:baz should be three");
 } END_TEST
 
-START_TEST (test_stats_over_time) {
+START_TEST (stats_over_time) {
 	struct hashtable *c = NULL;
 	c = add_stat(c, "foo", "bar", 5);
 	sleep(1);
@@ -66,14 +60,22 @@ START_TEST (test_stats_over_time) {
 	fail_unless(last->value == 7, "foo:bar should be seven");
 } END_TEST
 
+START_TEST (rules_empty) {
+	struct hashtable *a = NULL;
+	fail_unless(a == NULL, "empty hashtables are NULL.");
+} END_TEST
+
 Suite *heman_suite(void) {
 	Suite *s = suite_create("Heman");
-	TCase *tc_core = tcase_create("Core");
-	tcase_add_test(tc_core, test_empty_stats);
-	tcase_add_test(tc_core, test_single_stat);
-	tcase_add_test(tc_core, test_several_stat);
-	tcase_add_test(tc_core, test_stats_over_time);
-	suite_add_tcase(s, tc_core);
+	TCase *tc_stats = tcase_create("Stats");
+	tcase_add_test(tc_stats, stats_empty);
+	tcase_add_test(tc_stats, stats_single);
+	tcase_add_test(tc_stats, stats_several);
+	tcase_add_test(tc_stats, stats_over_time);
+	TCase *tc_rules = tcase_create("Rules");
+	tcase_add_test(tc_rules, rules_empty);
+	suite_add_tcase(s, tc_stats);
+	suite_add_tcase(s, tc_rules);
 	return s;
 }
 
@@ -81,7 +83,7 @@ int main (void) {
 	int number_failed;
 	Suite *s = heman_suite();
 	SRunner *sr = srunner_create(s);
-	srunner_run_all(sr, CK_VERBOSE);
+	srunner_run_all(sr, CK_NORMAL);
 	number_failed = srunner_ntests_failed(sr);
 	srunner_free(sr);
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;

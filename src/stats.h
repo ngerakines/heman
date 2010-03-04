@@ -29,6 +29,12 @@ THE SOFTWARE.
 struct ll_stat;
 typedef struct ll_stat *StatNode;
 
+struct ll_stat {
+	int value;
+	time_t when;
+	StatNode next;
+};
+
 struct store_key {
 	char *namespace;
 	char *key;
