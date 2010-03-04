@@ -21,17 +21,18 @@ THE SOFTWARE.
 */
 
 #include "hashtable.h"
-#include "rules.h"
+#include "stats.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "hashtable_itr.h"
 
-DEFINE_HASHTABLE_INSERT(insert_rule, struct rule_key, struct rule_value);
-DEFINE_HASHTABLE_SEARCH(search_rules, struct rule_key, struct rule_value);
+DEFINE_HASHTABLE_SEARCH(search_health, struct hrule_key, struct hrule_value);
 
-unsigned int hash_rule(void *ky) {
-	RuleKey k = (RuleKey)ky;
-	char *s = k->key; // Need to account for namespace too.
+// NKG: Yeah, so, this is the best I could do.
+unsigned int hash_hrule(void *ky) {
+	struct hrule_key *k = (struct hrule_key *)ky;
+	const char * s = k->name;
 	unsigned int hash = 0;
 	for(; *s; ++s) {
 		hash += *s;
@@ -44,63 +45,55 @@ unsigned int hash_rule(void *ky) {
 	return hash;
 }
 
-int equal_rules(void *k1, void *k2) {
-	return (0 == memcmp(k1, k2, sizeof(struct rule_key)));
+int equal_hrules(void *k1, void *k2) {
+	return (0 == memcmp(k1, k2, sizeof(struct hrule_key)));
 }
 
-Rules create_rule(Rules h, char *namespace, char *key, int op) {
+HRules add_hrule(HRules h, char *name, char *namespace, char *key, char *lua, char *transforms) {
 	if (h == NULL) {
-		h = create_hashtable(16, hash_rule, equal_rules);
+		h = create_hashtable(16, hash_hrule, equal_hrules);
 		if (NULL == h) {
 			// NKG: Should I be calling `exit(-1)` here?
 			exit(-1);
 		}
 	}
 
-	RuleKey new_rule_key;
-	new_rule_key = (RuleKey)malloc(sizeof(struct rule_key));
-	if (NULL == new_rule_key) {
+	HRuleKey hkey;
+	hkey = (HRuleKey)malloc(sizeof(struct hrule_key));
+	if (NULL == hkey) {
 		// NKG: Should I just call `exit(1)` here?
 		return NULL;
 	}
-	new_rule_key->namespace = namespace;
-	new_rule_key->key = key;
+	hkey->name = name;
 
-	Rule rule;
+	HRule value;
 
-	if (NULL == (rule = search_rules(h, new_rule_key))) {
-		rule = (Rule)malloc(sizeof(struct rule_value));
-		rule->namespace = namespace;
-		rule->key = key;
-		rule->op = op;
-		if (hashtable_insert(h, new_rule_key, rule) != -1) {
+	if (NULL == (value = search_health(h, hkey))) {
+		value = (HRule)malloc(sizeof(struct hrule_value));
+		value->namespace = namespace;
+		value->key = key;
+		value->lua = lua;
+		value->transforms = transforms;
+		if (hashtable_insert(h, hkey, value) != -1) {
 			// NKG: Should I be calling `exit(-1)` here?
 			exit(-1);
 		}
 	}
-
 	return h;
 }
 
-int rule_op(Rules h, char *namespace, char *key) {
-	if (h == NULL) {
-		return 1;
+int hrules_for_namespace(HRules h, char *namespace) {
+	struct hashtable_itr *iter;
+	HRule rule;
+	iter = hashtable_iterator(h);
+	int i = 0;
+	if (hashtable_count(h) > 0) {
+		do {
+			rule = hashtable_iterator_value(iter);
+			if (rule->namespace == namespace) {
+				i++;
+			}
+		} while (hashtable_iterator_advance(iter));
 	}
-
-	RuleKey search_key;
-	search_key = (RuleKey)malloc(sizeof(struct rule_key));
-	if (search_key == NULL) {
-		return 1;
-	}
-	search_key->namespace = namespace;
-	search_key->key = key;
-
-	Rule rule;
-	rule = search_rules(h, search_key);
-	free(search_key);
-	if (rule == NULL) {
-		return 1;
-	}
-
-	return rule->op;
+	return i;
 }

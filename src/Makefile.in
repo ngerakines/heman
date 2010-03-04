@@ -46,7 +46,8 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_heman_OBJECTS = heman-heman.$(OBJEXT) heman-hashtable.$(OBJEXT) \
-	heman-stats.$(OBJEXT) heman-rules.$(OBJEXT)
+	heman-stats.$(OBJEXT) heman-rules.$(OBJEXT) \
+	heman-health.$(OBJEXT) heman-hashtable_itr.$(OBJEXT)
 heman_OBJECTS = $(am_heman_OBJECTS)
 heman_LDADD = $(LDADD)
 heman_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -179,8 +180,8 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-heman_SOURCES = heman.c heman.h hashtable.c hashtable.h hashtable_private.h stats.c stats.h rules.c rules.h
-heman_CFLAGS = $(OPTIMIZATION) -Wall $(ARCH) $(PROF) --std=c99
+heman_SOURCES = heman.c heman.h heman_types.h hashtable.c hashtable.h  hashtable_private.h stats.c stats.h rules.c rules.h health.c health.h  hashtable_itr.h hashtable_itr.c
+heman_CFLAGS = $(OPTIMIZATION) -Wall $(ARCH) $(PROF) --std=c99 -fgnu89-inline
 all: all-am
 
 .SUFFIXES:
@@ -253,6 +254,8 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-hashtable.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-hashtable_itr.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-health.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-heman.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-rules.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-stats.Po@am__quote@
@@ -333,6 +336,34 @@ heman-rules.obj: rules.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rules.c' object='heman-rules.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-rules.obj `if test -f 'rules.c'; then $(CYGPATH_W) 'rules.c'; else $(CYGPATH_W) '$(srcdir)/rules.c'; fi`
+
+heman-health.o: health.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-health.o -MD -MP -MF $(DEPDIR)/heman-health.Tpo -c -o heman-health.o `test -f 'health.c' || echo '$(srcdir)/'`health.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-health.Tpo $(DEPDIR)/heman-health.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='health.c' object='heman-health.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-health.o `test -f 'health.c' || echo '$(srcdir)/'`health.c
+
+heman-health.obj: health.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-health.obj -MD -MP -MF $(DEPDIR)/heman-health.Tpo -c -o heman-health.obj `if test -f 'health.c'; then $(CYGPATH_W) 'health.c'; else $(CYGPATH_W) '$(srcdir)/health.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-health.Tpo $(DEPDIR)/heman-health.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='health.c' object='heman-health.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-health.obj `if test -f 'health.c'; then $(CYGPATH_W) 'health.c'; else $(CYGPATH_W) '$(srcdir)/health.c'; fi`
+
+heman-hashtable_itr.o: hashtable_itr.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-hashtable_itr.o -MD -MP -MF $(DEPDIR)/heman-hashtable_itr.Tpo -c -o heman-hashtable_itr.o `test -f 'hashtable_itr.c' || echo '$(srcdir)/'`hashtable_itr.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-hashtable_itr.Tpo $(DEPDIR)/heman-hashtable_itr.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hashtable_itr.c' object='heman-hashtable_itr.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-hashtable_itr.o `test -f 'hashtable_itr.c' || echo '$(srcdir)/'`hashtable_itr.c
+
+heman-hashtable_itr.obj: hashtable_itr.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-hashtable_itr.obj -MD -MP -MF $(DEPDIR)/heman-hashtable_itr.Tpo -c -o heman-hashtable_itr.obj `if test -f 'hashtable_itr.c'; then $(CYGPATH_W) 'hashtable_itr.c'; else $(CYGPATH_W) '$(srcdir)/hashtable_itr.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-hashtable_itr.Tpo $(DEPDIR)/heman-hashtable_itr.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hashtable_itr.c' object='heman-hashtable_itr.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-hashtable_itr.obj `if test -f 'hashtable_itr.c'; then $(CYGPATH_W) 'hashtable_itr.c'; else $(CYGPATH_W) '$(srcdir)/hashtable_itr.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

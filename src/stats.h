@@ -25,34 +25,14 @@ THE SOFTWARE.
 
 #include <sys/time.h>
 #include "hashtable.h"
-
-struct ll_stat;
-typedef struct ll_stat *StatNode;
-
-struct ll_stat {
-	int value;
-	time_t when;
-	StatNode next;
-};
-
-struct store_key {
-	char *namespace;
-	char *key;
-};
-
-struct store_value {
-	char *namespace;
-	char *key;
-	int count;
-	StatNode stats;
-};
+#include "heman_types.h"
 
 unsigned int hash_stat(void *ky);
 int equal_stats(void *k1, void *k2);
-struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int value);
+Stats add_stat(Stats h, char *namespace, char *key, int value, int op);
 
 StatNode create_stat(int value, time_t when);
 StatNode push_stat(StatNode head, int value, time_t when);
-StatNode last_for_nsk(struct hashtable *hash_table, char *namespace, char *key);
+StatNode last_for_nsk(Stats hash_table, char *namespace, char *key);
 
 #endif

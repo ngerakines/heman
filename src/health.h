@@ -20,17 +20,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef __RULES_H__
-#define __RULES_H__
+#ifndef __HEALTH_H__
+#define __HEALTH_H__
 
 #include <sys/time.h>
 #include "hashtable.h"
 #include "heman_types.h"
 
-unsigned int hash_rule(void *ky);
-int equal_rules(void *k1, void *k2);
+unsigned int hash_hrule(void *ky);
+int equal_hrules(void *k1, void *k2);
+HRules add_hrule(HRules h, char *name, char *namespace, char *key, char *lua, char *transforms);
 
-Rules create_rule(Rules h, char *namespace, char *key, int op);
-int rule_op(Rules h, char *namespace, char *key);
+int hrules_for_namespace(HRules h, char *namespace);
 
 #endif

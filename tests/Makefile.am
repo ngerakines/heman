@@ -2,6 +2,6 @@
 
 TESTS = check_heman
 check_PROGRAMS = check_heman
-check_heman_SOURCES = check_heman.c $(top_builddir)/src/stats.c $(top_builddir)/src/stats.h $(top_builddir)/src/hashtable.c $(top_builddir)/src/hashtable.h $(top_builddir)/src/rules.c $(top_builddir)/src/rules.h
-check_heman_CFLAGS = @CHECK_CFLAGS@ -g -Wall
+check_heman_SOURCES = check_heman.c $(top_builddir)/src/stats.c $(top_builddir)/src/stats.h $(top_builddir)/src/hashtable.c $(top_builddir)/src/hashtable.h $(top_builddir)/src/rules.c $(top_builddir)/src/rules.h $(top_builddir)/src/health.c $(top_builddir)/src/health.h $(top_builddir)/src/hashtable_itr.c $(top_builddir)/src/hashtable_itr.h
+check_heman_CFLAGS = @CHECK_CFLAGS@ -g -Wall --std=c99 -fgnu89-inline
 check_heman_LDADD = @CHECK_LIBS@

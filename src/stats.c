@@ -26,17 +26,11 @@ THE SOFTWARE.
 #include <stdio.h>
 #include <string.h>
 
-DEFINE_HASHTABLE_INSERT(insert_some, struct store_key, struct store_value);
-DEFINE_HASHTABLE_SEARCH(search_some, struct store_key, struct store_value);
-DEFINE_HASHTABLE_REMOVE(remove_some, struct store_key, struct store_value);
-
-unsigned int hash_stat(void *ky);
-int equal_stats(void *k1, void *k2);
-struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int value);
+DEFINE_HASHTABLE_SEARCH(search_stats, struct stat_key, struct stat_value);
 
 // NKG: Yeah, so, this is the best I could do.
 unsigned int hash_stat(void *ky) {
-	struct store_key *k = (struct store_key *)ky;
+	struct stat_key *k = (struct stat_key *)ky;
 	const char * s = k->key; // Need to account for namespace too.
 	unsigned int hash = 0;
 	for(; *s; ++s) {
@@ -51,10 +45,10 @@ unsigned int hash_stat(void *ky) {
 }
 
 int equal_stats(void *k1, void *k2) {
-	return (0 == memcmp(k1, k2, sizeof(struct store_key)));
+	return (0 == memcmp(k1, k2, sizeof(struct stat_key)));
 }
 
-struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int value) {
+Stats add_stat(struct hashtable *h, char *namespace, char *key, int value, int op) {
 	if (h == NULL) {
 		h = create_hashtable(16, hash_stat, equal_stats);
 		if (NULL == h) {
@@ -63,8 +57,8 @@ struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int 
 		}
 	}
 
-	struct store_key *new_key;
-	new_key = (struct store_key *)malloc(sizeof(struct store_key));
+	struct stat_key *new_key;
+	new_key = (struct stat_key *)malloc(sizeof(struct stat_key));
 	if (NULL == new_key) {
 		// NKG: Should I just call `exit(1)` here?
 		return NULL;
@@ -72,10 +66,10 @@ struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int 
 	new_key->namespace = namespace;
 	new_key->key = key;
 
-	struct store_value *key_value;
+	struct stat_value *key_value;
 
-	if (NULL == (key_value = search_some(h, new_key))) {
-		key_value = (struct store_value *)malloc(sizeof(struct store_value));
+	if (NULL == (key_value = search_stats(h, new_key))) {
+		key_value = (struct stat_value *)malloc(sizeof(struct stat_value));
 		key_value->namespace = namespace;
 		key_value->key = key;
 		key_value->count = 1;
@@ -97,7 +91,11 @@ struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int 
 		key_value->stats = first;
 	} else {
 		if (key_value->stats->when == now) {
-			key_value->stats->value += value;
+			if (op == 1) {
+				key_value->stats->value += value;
+			} else if (op == 2) {
+				key_value->stats->value = value;
+			}
 		} else {
 			key_value->stats = push_stat(key_value->stats, value, now);
 		}
@@ -128,8 +126,8 @@ StatNode last_for_nsk(struct hashtable *hash_table, char *namespace, char *key) 
 	if (hash_table == NULL) {
 		return NULL;
 	}
-	struct store_key *search_key;
-	search_key = (struct store_key *)malloc(sizeof(struct store_key));
+	struct stat_key *search_key;
+	search_key = (struct stat_key *)malloc(sizeof(struct stat_key));
 	if (search_key == NULL) {
 		// NKG: Should I just call `exit(1)` here?
 		return NULL;
@@ -137,13 +135,12 @@ StatNode last_for_nsk(struct hashtable *hash_table, char *namespace, char *key) 
 	search_key->namespace = namespace;
 	search_key->key = key;
 
-	struct store_value *key_value;
-	key_value = search_some(hash_table, search_key);
+	struct stat_value *key_value;
+	key_value = search_stats(hash_table, search_key);
+	free(search_key);
 	if (key_value == NULL) {
-		free(search_key);
 		return NULL;
 	}
-	free(search_key);
 
 	return key_value->stats;
 }

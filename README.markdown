@@ -68,10 +68,14 @@ When Heman is determining if application health is "GOOD", "OK" or "BAD", it use
 # TODO
 
 Stats:
+
  * Add function to store to garbage collect old data.
  * When adding stats, support both 'incr' and 'set' operations.
+
 Rules:
+
 Health:
+
  * Add hashtable or binary search tree to represent health rules.
  * Add function to iterate over datasets for a given namespace.
  * Add lua support.

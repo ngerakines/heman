@@ -20,17 +20,74 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef __RULES_H__
-#define __RULES_H__
+#ifndef __HEMAN_TYPES_H__
+#define __HEMAN_TYPES_H__
 
 #include <sys/time.h>
 #include "hashtable.h"
-#include "heman_types.h"
 
-unsigned int hash_rule(void *ky);
-int equal_rules(void *k1, void *k2);
+// -- stats
 
-Rules create_rule(Rules h, char *namespace, char *key, int op);
-int rule_op(Rules h, char *namespace, char *key);
+struct ll_stat;
+typedef struct ll_stat *StatNode;
+
+struct ll_stat {
+	int value;
+	time_t when;
+	StatNode next;
+};
+
+struct stat_key {
+	char *namespace;
+	char *key;
+};
+
+struct stat_value {
+	char *namespace;
+	char *key;
+	int count;
+	StatNode stats;
+};
+
+typedef struct stat_key *StatKey;
+typedef struct stat_value *Stat;
+
+// -- rules
+
+struct rule_key {
+	char *namespace;
+	char *key;
+};
+
+struct rule_value {
+	char *namespace;
+	char *key;
+	int op;
+};
+
+typedef struct rule_key *RuleKey;
+typedef struct rule_value *Rule;
+
+// -- hrules
+
+struct hrule_key {
+	char *name;
+};
+
+struct hrule_value {
+	char *lua;
+	char *namespace;
+	char *key;
+	char *transforms;
+};
+
+typedef struct hrule_key *HRuleKey;
+typedef struct hrule_value *HRule;
+
+// -- containers
+
+typedef struct hashtable *Rules;
+typedef struct hashtable *Stats;
+typedef struct hashtable *HRules;
 
 #endif
