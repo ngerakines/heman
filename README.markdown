@@ -64,3 +64,15 @@ Lastly, once the system is setup with rules, health rules and is collecting data
     ]
 
 When Heman is determining if application health is "GOOD", "OK" or "BAD", it uses the status group in which is highest with 0 rules below it. Hence "1,1,0" is "OK" whereby "5,0,1" is "BAD".
+
+# TODO
+
+Stats:
+ * Add function to store to garbage collect old data.
+ * When adding stats, support both 'incr' and 'set' operations.
+Rules:
+ * Add hashtable or binary search tree to represent rules.
+Health:
+ * Add hashtable or binary search tree to represent health rules.
+ * Add function to iterate over datasets for a given namespace.
+ * Add lua support.
