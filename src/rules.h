@@ -20,34 +20,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#ifndef __STORE_H__
-#define __STORE_H__
+#ifndef __RULES_H__
+#define __RULES_H__
 
 #include <sys/time.h>
 #include "hashtable.h"
 
-struct ll_stat;
-typedef struct ll_stat *StatNode;
-
-struct store_key {
+struct rule_key {
 	char *namespace;
 	char *key;
 };
 
-struct store_value {
+struct rule_value {
 	char *namespace;
 	char *key;
-	int count;
-	StatNode stats;
+	int op;
 };
 
-static unsigned int hash_from_key(void *ky);
-static int equal_keys(void *k1, void *k2);
+typedef struct rule_key *RuleKey;
+typedef struct rule_value *Rule;
 
-struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int value);
-
-StatNode last_for_nsk(struct hashtable *hash_table, char *namespace, char *key);
-StatNode create_stat(int value, time_t when);
-StatNode push_stat(StatNode head, int value, time_t when);
+unsigned int hash_rule(void *ky);
+int equal_rules(void *k1, void *k2);
+struct hashtable *create_rule(struct hashtable *h, char *namespace, char *key, int op);
 
 #endif

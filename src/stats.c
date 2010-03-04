@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 #include "hashtable.h"
-#include "store.h"
+#include "stats.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -36,8 +36,12 @@ DEFINE_HASHTABLE_INSERT(insert_some, struct store_key, struct store_value);
 DEFINE_HASHTABLE_SEARCH(search_some, struct store_key, struct store_value);
 DEFINE_HASHTABLE_REMOVE(remove_some, struct store_key, struct store_value);
 
+unsigned int hash_stat(void *ky);
+int equal_stats(void *k1, void *k2);
+struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int value);
+
 // NKG: Yeah, so, this is the best I could do.
-unsigned int hash_from_key(void *ky) {
+unsigned int hash_stat(void *ky) {
 	struct store_key *k = (struct store_key *)ky;
 	const char * s = k->key; // Need to account for namespace too.
 	unsigned int hash = 0;
@@ -52,13 +56,13 @@ unsigned int hash_from_key(void *ky) {
 	return hash;
 }
 
-static int equal_keys(void *k1, void *k2) {
+int equal_stats(void *k1, void *k2) {
 	return (0 == memcmp(k1, k2, sizeof(struct store_key)));
 }
 
 struct hashtable *add_stat(struct hashtable *h, char *namespace, char *key, int value) {
 	if (h == NULL) {
-		h = create_hashtable(16, hash_from_key, equal_keys);
+		h = create_hashtable(16, hash_stat, equal_stats);
 		if (NULL == h) {
 			// NKG: Should I be calling `exit(-1)` here?
 			exit(-1);

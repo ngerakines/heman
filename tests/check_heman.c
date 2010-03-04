@@ -4,7 +4,8 @@
 #include <assert.h>
 #include <sys/time.h>
 #include "../src/hashtable.h"
-#include "../src/store.h"
+#include "../src/stats.h"
+#include "../src/rules.h"
 
 struct ll_stat {
 	int value;
@@ -20,16 +21,12 @@ START_TEST (test_empty_stats) {
 
 START_TEST (test_single_stat) {
 	struct hashtable *b = NULL;
-	time_t now;
-	time(&now);
-
 	b = add_stat(b, "foo", "bar", 1);
 	fail_if(b == NULL, "creating a stat shouldn't return null");
 	StatNode last = NULL;
 	last = last_for_nsk(b, "foo", "bar");
 	fail_if(last == NULL, "ns/key should be not NULL");
 	fail_unless(last->value == 1, "value should be one");
-
 	b = add_stat(b, "foo", "bar", 1);
 	fail_if(b == NULL, "creating a stat shouldn't return null");
 	last = last_for_nsk(b, "foo", "bar");
@@ -69,7 +66,7 @@ START_TEST (test_stats_over_time) {
 	fail_unless(last->value == 7, "foo:bar should be seven");
 } END_TEST
 
-Suite * heman_suite(void) {
+Suite *heman_suite(void) {
 	Suite *s = suite_create("Heman");
 	TCase *tc_core = tcase_create("Core");
 	tcase_add_test(tc_core, test_empty_stats);

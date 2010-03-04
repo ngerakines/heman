@@ -46,7 +46,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_heman_OBJECTS = heman-heman.$(OBJEXT) heman-hashtable.$(OBJEXT) \
-	heman-store.$(OBJEXT)
+	heman-stats.$(OBJEXT) heman-rules.$(OBJEXT)
 heman_OBJECTS = $(am_heman_OBJECTS)
 heman_LDADD = $(LDADD)
 heman_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -179,7 +179,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-heman_SOURCES = heman.c heman.h hashtable.c hashtable.h hashtable_private.h store.c store.h
+heman_SOURCES = heman.c heman.h hashtable.c hashtable.h hashtable_private.h stats.c stats.h rules.c rules.h
 heman_CFLAGS = $(OPTIMIZATION) -Wall $(ARCH) $(PROF) --std=c99
 all: all-am
 
@@ -254,7 +254,8 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-heman.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-store.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-rules.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-stats.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -305,19 +306,33 @@ heman-hashtable.obj: hashtable.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-hashtable.obj `if test -f 'hashtable.c'; then $(CYGPATH_W) 'hashtable.c'; else $(CYGPATH_W) '$(srcdir)/hashtable.c'; fi`
 
-heman-store.o: store.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-store.o -MD -MP -MF $(DEPDIR)/heman-store.Tpo -c -o heman-store.o `test -f 'store.c' || echo '$(srcdir)/'`store.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-store.Tpo $(DEPDIR)/heman-store.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='store.c' object='heman-store.o' libtool=no @AMDEPBACKSLASH@
+heman-stats.o: stats.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-stats.o -MD -MP -MF $(DEPDIR)/heman-stats.Tpo -c -o heman-stats.o `test -f 'stats.c' || echo '$(srcdir)/'`stats.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-stats.Tpo $(DEPDIR)/heman-stats.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='stats.c' object='heman-stats.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-store.o `test -f 'store.c' || echo '$(srcdir)/'`store.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-stats.o `test -f 'stats.c' || echo '$(srcdir)/'`stats.c
 
-heman-store.obj: store.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-store.obj -MD -MP -MF $(DEPDIR)/heman-store.Tpo -c -o heman-store.obj `if test -f 'store.c'; then $(CYGPATH_W) 'store.c'; else $(CYGPATH_W) '$(srcdir)/store.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-store.Tpo $(DEPDIR)/heman-store.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='store.c' object='heman-store.obj' libtool=no @AMDEPBACKSLASH@
+heman-stats.obj: stats.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-stats.obj -MD -MP -MF $(DEPDIR)/heman-stats.Tpo -c -o heman-stats.obj `if test -f 'stats.c'; then $(CYGPATH_W) 'stats.c'; else $(CYGPATH_W) '$(srcdir)/stats.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-stats.Tpo $(DEPDIR)/heman-stats.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='stats.c' object='heman-stats.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-store.obj `if test -f 'store.c'; then $(CYGPATH_W) 'store.c'; else $(CYGPATH_W) '$(srcdir)/store.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-stats.obj `if test -f 'stats.c'; then $(CYGPATH_W) 'stats.c'; else $(CYGPATH_W) '$(srcdir)/stats.c'; fi`
+
+heman-rules.o: rules.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-rules.o -MD -MP -MF $(DEPDIR)/heman-rules.Tpo -c -o heman-rules.o `test -f 'rules.c' || echo '$(srcdir)/'`rules.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-rules.Tpo $(DEPDIR)/heman-rules.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rules.c' object='heman-rules.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-rules.o `test -f 'rules.c' || echo '$(srcdir)/'`rules.c
+
+heman-rules.obj: rules.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-rules.obj -MD -MP -MF $(DEPDIR)/heman-rules.Tpo -c -o heman-rules.obj `if test -f 'rules.c'; then $(CYGPATH_W) 'rules.c'; else $(CYGPATH_W) '$(srcdir)/rules.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/heman-rules.Tpo $(DEPDIR)/heman-rules.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='rules.c' object='heman-rules.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -c -o heman-rules.obj `if test -f 'rules.c'; then $(CYGPATH_W) 'rules.c'; else $(CYGPATH_W) '$(srcdir)/rules.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

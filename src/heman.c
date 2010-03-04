@@ -40,6 +40,8 @@ THE SOFTWARE.
 #include <event.h>
 
 #include "heman.h"
+#include "stats.h"
+#include "rules.h"
 
 void on_read(int fd, short ev, void *arg) {
 	struct client *client = (struct client *)arg;

@@ -43,7 +43,7 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 am_check_heman_OBJECTS = check_heman-check_heman.$(OBJEXT) \
-	check_heman-store.$(OBJEXT) check_heman-hashtable.$(OBJEXT)
+	check_heman-stats.$(OBJEXT) check_heman-hashtable.$(OBJEXT)
 check_heman_OBJECTS = $(am_check_heman_OBJECTS)
 check_heman_DEPENDENCIES =
 check_heman_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -176,7 +176,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-check_heman_SOURCES = check_heman.c $(top_builddir)/src/store.c $(top_builddir)/src/store.h $(top_builddir)/src/hashtable.c $(top_builddir)/src/hashtable.h
+check_heman_SOURCES = check_heman.c $(top_builddir)/src/stats.c $(top_builddir)/src/stats.h $(top_builddir)/src/hashtable.c $(top_builddir)/src/hashtable.h
 check_heman_CFLAGS = @CHECK_CFLAGS@ -g -Wall
 check_heman_LDADD = @CHECK_LIBS@
 all: all-am
@@ -231,7 +231,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_heman-check_heman.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_heman-hashtable.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_heman-store.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/check_heman-stats.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -268,19 +268,19 @@ check_heman-check_heman.obj: check_heman.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -c -o check_heman-check_heman.obj `if test -f 'check_heman.c'; then $(CYGPATH_W) 'check_heman.c'; else $(CYGPATH_W) '$(srcdir)/check_heman.c'; fi`
 
-check_heman-store.o: $(top_builddir)/src/store.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -MT check_heman-store.o -MD -MP -MF $(DEPDIR)/check_heman-store.Tpo -c -o check_heman-store.o `test -f '$(top_builddir)/src/store.c' || echo '$(srcdir)/'`$(top_builddir)/src/store.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/check_heman-store.Tpo $(DEPDIR)/check_heman-store.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/store.c' object='check_heman-store.o' libtool=no @AMDEPBACKSLASH@
+check_heman-stats.o: $(top_builddir)/src/stats.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -MT check_heman-stats.o -MD -MP -MF $(DEPDIR)/check_heman-stats.Tpo -c -o check_heman-stats.o `test -f '$(top_builddir)/src/stats.c' || echo '$(srcdir)/'`$(top_builddir)/src/stats.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/check_heman-stats.Tpo $(DEPDIR)/check_heman-stats.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/stats.c' object='check_heman-stats.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -c -o check_heman-store.o `test -f '$(top_builddir)/src/store.c' || echo '$(srcdir)/'`$(top_builddir)/src/store.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -c -o check_heman-stats.o `test -f '$(top_builddir)/src/stats.c' || echo '$(srcdir)/'`$(top_builddir)/src/stats.c
 
-check_heman-store.obj: $(top_builddir)/src/store.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -MT check_heman-store.obj -MD -MP -MF $(DEPDIR)/check_heman-store.Tpo -c -o check_heman-store.obj `if test -f '$(top_builddir)/src/store.c'; then $(CYGPATH_W) '$(top_builddir)/src/store.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/store.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/check_heman-store.Tpo $(DEPDIR)/check_heman-store.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/store.c' object='check_heman-store.obj' libtool=no @AMDEPBACKSLASH@
+check_heman-stats.obj: $(top_builddir)/src/stats.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -MT check_heman-stats.obj -MD -MP -MF $(DEPDIR)/check_heman-stats.Tpo -c -o check_heman-stats.obj `if test -f '$(top_builddir)/src/stats.c'; then $(CYGPATH_W) '$(top_builddir)/src/stats.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/stats.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/check_heman-stats.Tpo $(DEPDIR)/check_heman-stats.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$(top_builddir)/src/stats.c' object='check_heman-stats.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -c -o check_heman-store.obj `if test -f '$(top_builddir)/src/store.c'; then $(CYGPATH_W) '$(top_builddir)/src/store.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/store.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -c -o check_heman-stats.obj `if test -f '$(top_builddir)/src/stats.c'; then $(CYGPATH_W) '$(top_builddir)/src/stats.c'; else $(CYGPATH_W) '$(srcdir)/$(top_builddir)/src/stats.c'; fi`
 
 check_heman-hashtable.o: $(top_builddir)/src/hashtable.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(check_heman_CFLAGS) $(CFLAGS) -MT check_heman-hashtable.o -MD -MP -MF $(DEPDIR)/check_heman-hashtable.Tpo -c -o check_heman-hashtable.o `test -f '$(top_builddir)/src/hashtable.c' || echo '$(srcdir)/'`$(top_builddir)/src/hashtable.c
