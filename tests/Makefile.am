@@ -1,8 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
-TESTS = check_barbershop
-check_PROGRAMS = check_barbershop
-check_barbershop_SOURCES = check_heman.c
-# $(top_builddir)/src/scores.c $(top_builddir)/src/scores.h
-check_barbershop_CFLAGS = @CHECK_CFLAGS@ -g -Wall
-check_barbershop_LDADD = @CHECK_LIBS@
+TESTS = check_heman
+check_PROGRAMS = check_heman
+check_heman_SOURCES = check_heman.c $(top_builddir)/src/store.c $(top_builddir)/src/store.h $(top_builddir)/src/hashtable.c $(top_builddir)/src/hashtable.h
+check_heman_CFLAGS = @CHECK_CFLAGS@ -g -Wall
+check_heman_LDADD = @CHECK_LIBS@
