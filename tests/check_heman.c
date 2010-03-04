@@ -65,6 +65,16 @@ START_TEST (rules_empty) {
 	fail_unless(a == NULL, "empty hashtables are NULL.");
 } END_TEST
 
+START_TEST (rules_basic) {
+	struct hashtable *b = NULL;
+	b = create_rule(b, "foo", "bar", 1);
+	fail_if(b == NULL, "Creating a rule should populate the hashtable.");
+	printf("Rule created\n");
+	fail_unless(rule_op(b, "foo", "bar") == 1, "rule op is 1");
+	b = create_rule(b, "foo", "baz", 2);
+	fail_unless(rule_op(b, "foo", "baz") == 2, "rule op for foo:baz is 2");
+} END_TEST
+
 Suite *heman_suite(void) {
 	Suite *s = suite_create("Heman");
 	TCase *tc_stats = tcase_create("Stats");
@@ -74,6 +84,7 @@ Suite *heman_suite(void) {
 	tcase_add_test(tc_stats, stats_over_time);
 	TCase *tc_rules = tcase_create("Rules");
 	tcase_add_test(tc_rules, rules_empty);
+	tcase_add_test(tc_rules, rules_basic);
 	suite_add_tcase(s, tc_stats);
 	suite_add_tcase(s, tc_rules);
 	return s;

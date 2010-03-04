@@ -82,3 +82,26 @@ struct hashtable *create_rule(struct hashtable *h, char *namespace, char *key, i
 
 	return h;
 }
+
+int rule_op(struct hashtable *h, char *namespace, char *key) {
+	if (h == NULL) {
+		return 1;
+	}
+
+	RuleKey search_key;
+	search_key = (RuleKey)malloc(sizeof(struct rule_key));
+	if (search_key == NULL) {
+		return 1;
+	}
+	search_key->namespace = namespace;
+	search_key->key = key;
+
+	Rule rule;
+	rule = search_rules(h, search_key);
+	free(search_key);
+	if (rule == NULL) {
+		return 1;
+	}
+
+	return rule->op;
+}

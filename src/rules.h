@@ -43,5 +43,6 @@ typedef struct rule_value *Rule;
 unsigned int hash_rule(void *ky);
 int equal_rules(void *k1, void *k2);
 struct hashtable *create_rule(struct hashtable *h, char *namespace, char *key, int op);
+int rule_op(struct hashtable *h, char *namespace, char *key);
 
 #endif
