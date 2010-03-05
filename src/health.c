@@ -103,7 +103,6 @@ int hrules_for_namespace(HRules h, char *namespace) {
 
 Health health_for_namespace(HRules health_rules, char *namespace, Stats stats) {
 	Health health;
-	// NKG: Make sure this is freed.
 	health = (Health)malloc(sizeof(struct struct_health));
 	if (health == NULL) {
 		// NKG: Should I just call `exit(1)` here?
@@ -121,13 +120,9 @@ Health health_for_namespace(HRules health_rules, char *namespace, Stats stats) {
 		do {
 			rule = hashtable_iterator_value(iter);
 			if (rule->namespace == namespace) {
-
-				// * Gather all of the stats related to it
-				// * Perform an aggregate on it
-				// * Instantiate some lua and apply the response to our health struct
-
 				L = luaL_newstate();
 				luaL_openlibs(L);
+				// find a way to use `int luaL_loadstring (lua_State *L, const char *s);`
 				int status = luaL_loadfile(L, rule->lua);
 				if (status) {
 					fprintf(stderr, "Couldn't load file: %s\n", lua_tostring(L, -1));

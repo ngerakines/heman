@@ -43,6 +43,7 @@ THE SOFTWARE.
 #include "stats.h"
 #include "rules.h"
 
+// TODO: Parse incoming commands here.
 void on_read(int fd, short ev, void *arg) {
 	struct client *client = (struct client *)arg;
 	char buf[64];
@@ -59,13 +60,6 @@ void on_read(int fd, short ev, void *arg) {
 		free(client);
 		return;
 	}
-	/*
-	 Commands:
-	  * Create rule
-	  * Delete rule
-	  * List rules
-	*/
-	// size_t ntokens = tokenize_command((char*)buf, tokens, MAX_TOKENS);
 	reply(fd, "OK");
 }
 
@@ -91,8 +85,6 @@ void on_accept(int fd, short ev, void *arg) {
 }
 
 int main(int argc, char **argv) {
-	printf("one step at a time...\n");
-
 	int listen_fd;
 	struct sockaddr_in listen_addr;
 	int reuseaddr_on = 1;
@@ -111,7 +103,6 @@ int main(int argc, char **argv) {
 	event_set(&ev_accept, listen_fd, EV_READ|EV_PERSIST, on_accept, NULL);
 	event_add(&ev_accept, NULL);
 	event_dispatch();
-
 	return 0;
 }
 
