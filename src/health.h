@@ -31,6 +31,8 @@ unsigned int hash_hrule(void *ky);
 int equal_hrules(void *k1, void *k2);
 HRules add_hrule(HRules h, char *name, char *namespace, char *key, char *lua, char *transforms);
 
-int hrules_for_namespace(HRules h, char *namespace);
+int hrules_for_namespace(HRules health_rules, char *namespace);
+
+Health health_for_namespace(HRules health_rules, char *namespace, Stats stats);
 
 #endif

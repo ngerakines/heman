@@ -106,7 +106,7 @@ Stats add_stat(struct hashtable *h, char *namespace, char *key, int value, int o
 
 StatNode create_stat(int value, time_t when) {
 	StatNode node;
-	if (! (node = malloc(sizeof(StatNode)))) {
+	if (! (node = malloc(sizeof(struct ll_stat)))) {
 		return NULL;
 	}
 	node->value = value;

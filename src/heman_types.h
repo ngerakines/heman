@@ -84,6 +84,14 @@ struct hrule_value {
 typedef struct hrule_key *HRuleKey;
 typedef struct hrule_value *HRule;
 
+struct struct_health {
+	int good;
+	int ok;
+	int bad;
+};
+
+typedef struct struct_health *Health;
+
 // -- containers
 
 typedef struct hashtable *Rules;

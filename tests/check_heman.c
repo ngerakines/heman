@@ -91,6 +91,41 @@ START_TEST (health_basic) {
 	fail_unless(hrules_for_namespace(c, "foo") == 2, "health rule count of 2 is returned");
 } END_TEST
 
+START_TEST (health_calc) {
+	HRules health_rules = NULL;
+	Stats stats = NULL;
+	stats = add_stat(stats, "foo", "bar", 1, 1);
+	stats = add_stat(stats, "foo", "bar", 1, 1);
+	stats = add_stat(stats, "foo", "baz", 1, 1);
+	stats = add_stat(stats, "foo", "baz", 1, 1);
+	stats = add_stat(stats, "foo", "baz", 1, 1);
+	health_rules = add_hrule(health_rules, "has_bar", "foo", "bar", "test_1.lua", "none");
+	fail_if(stats == NULL, "stats should have values");
+	fail_if(health_rules == NULL, "health_rules should have values");
+	Health health;
+	health = health_for_namespace(health_rules, "foo", stats);
+	fail_unless(health->good == 1, "good is 0");
+	fail_unless(health->ok == 0, "ok is 0");
+	fail_unless(health->bad == 0, "bad is 0");
+	free(health); health = NULL;
+	sleep(1);
+	stats = add_stat(stats, "foo", "bar", 1, 1);
+	stats = add_stat(stats, "foo", "bar", 1, 1);
+	stats = add_stat(stats, "foo", "bar", 1, 1);
+	stats = add_stat(stats, "foo", "bar", 1, 1);
+	health = health_for_namespace(health_rules, "foo", stats);
+	fail_unless(health->good == 0, "good is 0");
+	fail_unless(health->ok == 1, "ok is 0");
+	fail_unless(health->bad == 0, "bad is 0");
+	free(health); health = NULL;
+	sleep(1);
+	stats = add_stat(stats, "foo", "bar", 5, 1);
+	health = health_for_namespace(health_rules, "foo", stats);
+	fail_unless(health->good == 0, "good is 0");
+	fail_unless(health->ok == 0, "ok is 0");
+	fail_unless(health->bad == 1, "bad is 0");
+} END_TEST
+
 Suite *heman_suite(void) {
 	Suite *s = suite_create("Heman");
 	TCase *tc_stats = tcase_create("Stats");
@@ -104,6 +139,7 @@ Suite *heman_suite(void) {
 	TCase *tc_health = tcase_create("Health");
 	tcase_add_test(tc_health, health_empty);
 	tcase_add_test(tc_health, health_basic);
+	tcase_add_test(tc_health, health_calc);
 	suite_add_tcase(s, tc_stats);
 	suite_add_tcase(s, tc_rules);
 	suite_add_tcase(s, tc_health);

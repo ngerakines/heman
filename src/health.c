@@ -20,12 +20,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "hashtable.h"
-#include "stats.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <lua.h>
+#include <lauxlib.h>
+
+#include "hashtable.h"
 #include "hashtable_itr.h"
+#include "stats.h"
 
 DEFINE_HASHTABLE_SEARCH(search_health, struct hrule_key, struct hrule_value);
 
@@ -96,4 +99,68 @@ int hrules_for_namespace(HRules h, char *namespace) {
 		} while (hashtable_iterator_advance(iter));
 	}
 	return i;
+}
+
+Health health_for_namespace(HRules health_rules, char *namespace, Stats stats) {
+	Health health;
+	// NKG: Make sure this is freed.
+	health = (Health)malloc(sizeof(struct struct_health));
+	if (health == NULL) {
+		// NKG: Should I just call `exit(1)` here?
+		return NULL;
+	}
+	health->good = 0;
+	health->ok = 0;
+	health->bad = 0;
+
+	struct hashtable_itr *iter;
+	HRule rule;
+	lua_State *L;
+	iter = hashtable_iterator(health_rules);
+	if (hashtable_count(health_rules) > 0) {
+		do {
+			rule = hashtable_iterator_value(iter);
+			if (rule->namespace == namespace) {
+
+				// * Gather all of the stats related to it
+				// * Perform an aggregate on it
+				// * Instantiate some lua and apply the response to our health struct
+
+				L = luaL_newstate();
+				luaL_openlibs(L);
+				int status = luaL_loadfile(L, rule->lua);
+				if (status) {
+					fprintf(stderr, "Couldn't load file: %s\n", lua_tostring(L, -1));
+					health->bad += 1;
+					break;
+				}
+				lua_newtable(L);
+				StatNode last = NULL;
+				last = last_for_nsk(stats, rule->namespace, rule->key);
+				while (last) {
+					lua_pushnumber(L, last->when);
+					lua_pushnumber(L, last->value);
+					lua_rawset(L, -3);
+					last = last->next;
+				}
+				lua_setglobal(L, "data");
+				int result = lua_pcall(L, 0, LUA_MULTRET, 0);
+				if (result) {
+					fprintf(stderr, "Failed to run script: %s\n", lua_tostring(L, -1));
+					health->bad += 1;
+					break;
+				}
+				int resp = lua_tonumber(L, -1);
+				switch(resp) {
+					case 1: health->good += 1; break;
+					case 2: health->ok += 1; break;
+					default: health->bad += 1;
+				}
+				lua_pop(L, 1);
+				lua_close(L);
+			}
+		} while (hashtable_iterator_advance(iter));
+	}
+
+	return health;
 }
