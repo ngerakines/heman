@@ -39,6 +39,8 @@ THE SOFTWARE.
 #include <unistd.h>
 #include <event.h>
 
+#include <bert.h>
+
 #include "heman.h"
 #include "stats.h"
 #include "rules.h"
@@ -46,8 +48,8 @@ THE SOFTWARE.
 // TODO: Parse incoming commands here.
 void on_read(int fd, short ev, void *arg) {
 	struct client *client = (struct client *)arg;
-	char buf[64];
-	int len = read(fd, buf, sizeof(buf));
+	unsigned char buffer[1024];
+	int len = read(fd, buffer, sizeof(buffer));
 	if (len == 0) {
 		close(fd);
 		event_del(&client->ev_read);
@@ -60,6 +62,28 @@ void on_read(int fd, short ev, void *arg) {
 		free(client);
 		return;
 	}
+	printf("incoming data: '%s'\n", buffer);
+
+	bert_decoder_t *decoder;
+	decoder = bert_decoder_create();
+	bert_decoder_buffer(decoder, buffer, sizeof(buffer));
+
+	bert_data_t *data;
+	int result;
+	
+	if ((result = bert_decoder_pull(decoder, &data)) != 1) {
+		printf("bert error: %s", bert_strerror(result));
+	}
+	if (data->type != bert_data_tuple) {
+	printf("Type is not a tuple: %d", data->type);
+	// test_fail("bert_decoder_next did not decode a tuple");
+	}
+	printf("data type is %d.\n", data->type);
+	printf("receieved a tuple of %d length.\n", data->tuple->length);
+
+	bert_decoder_destroy(decoder);
+	// {request, foo}
+
 	reply(fd, "OK");
 }
 

@@ -21,6 +21,7 @@ AC_PROG_LIBTOOL
 # Checks for libraries.
 
 AC_CHECK_LIB([lua], [lua_call])
+AC_CHECK_LIB([BERT], [bert_decoder_pull])
 AC_CHECK_LIB([m], [cos])
 AC_CHECK_LIB([pthread], [pthread_create])
 

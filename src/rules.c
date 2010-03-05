@@ -31,8 +31,14 @@ DEFINE_HASHTABLE_SEARCH(search_rules, struct rule_key, struct rule_value);
 
 unsigned int hash_rule(void *ky) {
 	RuleKey k = (RuleKey)ky;
-	char *s = k->key; // Need to account for namespace too.
 	unsigned int hash = 0;
+	char *s = k->namespace;
+	for(; *s; ++s) {
+		hash += *s;
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+	s = k->key;
 	for(; *s; ++s) {
 		hash += *s;
 		hash += (hash << 10);

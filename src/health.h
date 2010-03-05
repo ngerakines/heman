@@ -29,6 +29,7 @@ THE SOFTWARE.
 
 unsigned int hash_hrule(void *ky);
 int equal_hrules(void *k1, void *k2);
+int hrule_exists(HRules health_rules, char *name);
 HRules add_hrule(HRules h, char *name, char *namespace, char *key, char *lua, char *transforms);
 int hrules_for_namespace(HRules health_rules, char *namespace);
 Health health_for_namespace(HRules health_rules, char *namespace, Stats stats);

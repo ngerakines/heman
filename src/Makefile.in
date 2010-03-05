@@ -32,7 +32,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = heman$(EXEEXT)
+bin_PROGRAMS = client$(EXEEXT) heman$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -45,6 +45,12 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
+am_client_OBJECTS = client-client.$(OBJEXT)
+client_OBJECTS = $(am_client_OBJECTS)
+client_LDADD = $(LDADD)
+client_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(client_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_heman_OBJECTS = heman-heman.$(OBJEXT) heman-hashtable.$(OBJEXT) \
 	heman-stats.$(OBJEXT) heman-rules.$(OBJEXT) \
 	heman-health.$(OBJEXT) heman-hashtable_itr.$(OBJEXT)
@@ -65,8 +71,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(heman_SOURCES)
-DIST_SOURCES = $(heman_SOURCES)
+SOURCES = $(client_SOURCES) $(heman_SOURCES)
+DIST_SOURCES = $(client_SOURCES) $(heman_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -181,7 +187,9 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 heman_SOURCES = heman.c heman.h heman_types.h hashtable.c hashtable.h  hashtable_private.h stats.c stats.h rules.c rules.h health.c health.h  hashtable_itr.h hashtable_itr.c
-heman_CFLAGS = $(OPTIMIZATION) -Wall $(ARCH) $(PROF) --std=c99 -fgnu89-inline
+heman_CFLAGS = $(OPTIMIZATION) -Wall $(ARCH) $(PROF)
+client_SOURCES = client.c
+client_CFLAGS = $(OPTIMIZATION) -Wall $(ARCH) $(PROF)
 all: all-am
 
 .SUFFIXES:
@@ -243,6 +251,9 @@ clean-binPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
+client$(EXEEXT): $(client_OBJECTS) $(client_DEPENDENCIES) 
+	@rm -f client$(EXEEXT)
+	$(client_LINK) $(client_OBJECTS) $(client_LDADD) $(LIBS)
 heman$(EXEEXT): $(heman_OBJECTS) $(heman_DEPENDENCIES) 
 	@rm -f heman$(EXEEXT)
 	$(heman_LINK) $(heman_OBJECTS) $(heman_LDADD) $(LIBS)
@@ -253,6 +264,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client-client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-hashtable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-hashtable_itr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heman-health.Po@am__quote@
@@ -280,6 +292,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+client-client.o: client.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_CFLAGS) $(CFLAGS) -MT client-client.o -MD -MP -MF $(DEPDIR)/client-client.Tpo -c -o client-client.o `test -f 'client.c' || echo '$(srcdir)/'`client.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/client-client.Tpo $(DEPDIR)/client-client.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='client.c' object='client-client.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_CFLAGS) $(CFLAGS) -c -o client-client.o `test -f 'client.c' || echo '$(srcdir)/'`client.c
+
+client-client.obj: client.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_CFLAGS) $(CFLAGS) -MT client-client.obj -MD -MP -MF $(DEPDIR)/client-client.Tpo -c -o client-client.obj `if test -f 'client.c'; then $(CYGPATH_W) 'client.c'; else $(CYGPATH_W) '$(srcdir)/client.c'; fi`
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/client-client.Tpo $(DEPDIR)/client-client.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='client.c' object='client-client.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(client_CFLAGS) $(CFLAGS) -c -o client-client.obj `if test -f 'client.c'; then $(CYGPATH_W) 'client.c'; else $(CYGPATH_W) '$(srcdir)/client.c'; fi`
 
 heman-heman.o: heman.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(heman_CFLAGS) $(CFLAGS) -MT heman-heman.o -MD -MP -MF $(DEPDIR)/heman-heman.Tpo -c -o heman-heman.o `test -f 'heman.c' || echo '$(srcdir)/'`heman.c

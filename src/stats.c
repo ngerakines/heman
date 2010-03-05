@@ -31,8 +31,14 @@ DEFINE_HASHTABLE_SEARCH(search_stats, struct stat_key, struct stat_value);
 // NKG: Yeah, so, this is the best I could do.
 unsigned int hash_stat(void *ky) {
 	struct stat_key *k = (struct stat_key *)ky;
-	const char * s = k->key; // Need to account for namespace too.
 	unsigned int hash = 0;
+	char *s = k->namespace;
+	for(; *s; ++s) {
+		hash += *s;
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+	s = k->key;
 	for(; *s; ++s) {
 		hash += *s;
 		hash += (hash << 10);

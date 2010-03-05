@@ -52,6 +52,29 @@ int equal_hrules(void *k1, void *k2) {
 	return (0 == memcmp(k1, k2, sizeof(struct hrule_key)));
 }
 
+int hrule_exists(HRules health_rules, char *name) {
+	int retval = 0;
+	if (health_rules == NULL) {
+		return retval;
+	}
+	
+	HRuleKey hkey;
+	hkey = (HRuleKey)malloc(sizeof(struct hrule_key));
+	if (NULL == hkey) {
+		// NKG: Should I just call `exit(1)` here?
+		return retval;
+	}
+	hkey->name = name;
+
+	HRule value;
+	value = search_health(health_rules, hkey);
+	free(hkey);
+	if (value != NULL) {
+		retval = 1;
+	}
+	return retval;
+}
+
 HRules add_hrule(HRules h, char *name, char *namespace, char *key, char *lua, char *transforms) {
 	if (h == NULL) {
 		h = create_hashtable(16, hash_hrule, equal_hrules);

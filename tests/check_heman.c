@@ -84,10 +84,14 @@ START_TEST (health_empty) {
 
 START_TEST (health_basic) {
 	HRules c = NULL;
+	fail_unless(hrule_exists(c, "has_activity") == 0, "no rules should exist");
 	c = add_hrule(c, "has_activity", "foo", "bar", "none", "none");
 	fail_if(c == NULL, "Creating a rule should populate the hashtable.");
+	fail_unless(hrule_exists(c, "has_activity") == 1, "rule exists");
+	fail_unless(hrule_exists(c, "has_activity2") == 0, "rule does not exist");
 	fail_unless(hrules_for_namespace(c, "foo") == 1, "health rule count of 1 is returned");
 	c = add_hrule(c, "moar_activity_pls", "foo", "bar", "none", "none");
+	fail_unless(hrule_exists(c, "moar_activity_pls") == 1, "rule does exist");
 	fail_unless(hrules_for_namespace(c, "foo") == 2, "health rule count of 2 is returned");
 } END_TEST
 
