@@ -36,7 +36,7 @@ Copyright (c) 2010 Nick Gerakines <nick at gerakines dot net>
 
 typedef char byte_t;
 
-void send_command(int sd, char *command);
+void send_command_call(int sd, char *module, char *function, char *arguments);
 
 int main(int argc, char **argv) {
 	char *ipaddress = "127.0.0.1";
@@ -81,49 +81,13 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	if (strcmp(argv[optind], "update") == 0) {
-		if (argc - optind != 3) {
-			printf("The 'update' command requires 2 command parameters.\n");
-			printf("usage: client [--ip=] [--port=] update <item id> <priority value>\n");
+	if (strcmp(argv[optind], "call") == 0) {
+		if (argc - optind != 4) {
+			printf("The 'call' command requires 3 command parameters.\n");
+			printf("usage: client [--ip=] [--port=] call <module> <function> <arguments>\n");
 			exit(1);
 		}
 		action = 1;
-	}
-
-	if (strcmp(argv[optind], "next") == 0) {
-		if (argc - optind != 1) {
-			printf("The 'next' command requires 0 command parameters.\n");
-			printf("usage: client [--ip=] [--port=] next\n");
-			exit(1);
-		}
-		action = 2;
-	}
-
-	if (strcmp(argv[optind], "peek") == 0) {
-		if (argc - optind != 1) {
-			printf("The 'peek' command requires 0 command parameters.\n");
-			printf("usage: client [--ip=] [--port=] peek\n");
-			exit(1);
-		}
-		action = 3;
-	}
-
-	if (strcmp(argv[optind], "info") == 0) {
-		if (argc - optind != 1) {
-			printf("The 'info' command requires 0 command parameters.\n");
-			printf("usage: client [--ip=] [--port=] info\n");
-			exit(1);
-		}
-		action = 4;
-	}
-
-	if (strcmp(argv[optind], "score") == 0) {
-		if (argc - optind != 2) {
-			printf("The 'score' command requires 1 command parameter.\n");
-			printf("usage: client [--ip=] [--port=] score <item id>\n");
-			exit(1);
-		}
-		action = 5;
 	}
 
 	if (action == 0) {
@@ -156,30 +120,9 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	int item_id = 0;
-	int priority = 0;
-	char msg[32];
-
 	switch (action) {
 		case 1:
-			item_id = atoi(argv[optind + 1]);
-			priority = atoi(argv[optind + 2]);
-			sprintf(msg, "UPDATE %d %d\r\n", item_id, priority);
-			send_command(sd, msg);
-			break;
-		case 2:
-			send_command(sd, "NEXT\r\n");
-			break;
-		case 3:
-			send_command(sd, "PEEK\r\n");
-			break;
-		case 4:
-			send_command(sd, "INFO\r\n");
-			break;
-		case 5:
-			item_id = atoi(argv[optind + 1]);
-			sprintf(msg, "SCORE %d\r\n", item_id);
-			send_command(sd, msg);
+			send_command_call(sd, argv[optind + 1], argv[optind + 2], argv[optind + 3]);
 			break;
 		default:
 			break;
@@ -190,10 +133,9 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-#define EXPECTED_LENGTH 	2
-#define OUTPUT_SIZE			(1 + 1 + 1 + ((1 + 1) * EXPECTED_LENGTH))
+#define OUTPUT_SIZE	1024
 
-void send_command(int sd, char *command) {
+void send_command_call(int sd, char *module, char *function, char *arguments) {
 	unsigned char output[OUTPUT_SIZE];
 	bert_encoder_t *encoder;
 
@@ -202,37 +144,48 @@ void send_command(int sd, char *command) {
 	{
 		printf("malloc failed\n");
 	}
-	printf("preparing encode buffer\n");
-	bert_encoder_buffer(encoder, output, OUTPUT_SIZE);
 
 	bert_data_t *data;
 	int result;
 	printf("about to create bert data.\n");
 	
-	if (!(data = bert_data_create_tuple(EXPECTED_LENGTH)))
+	if (!(data = bert_data_create_tuple(4)))
 	{
 		printf("malloc failed\n");
 	}
 
-	if (!(data->tuple->elements[0] = bert_data_create_int(1)))
+	if (!(data->tuple->elements[0] = bert_data_create_atom("call")))
 	{
-		printf("malloc failed\n");
+		printf("malloc 1 failed\n");
 	}
-
-	if (!(data->tuple->elements[1] = bert_data_create_int(2)))
+	if (!(data->tuple->elements[1] = bert_data_create_string(module)))
 	{
-		printf("malloc failed\n");
+		printf("malloc 2 failed");
 	}
-
-	if ((result = bert_encoder_push(encoder,data)) != BERT_SUCCESS)
+	if (!(data->tuple->elements[2] = bert_data_create_string(function)))
 	{
-		printf("%s\n", bert_strerror(result));
-		// test_fail(bert_strerror(result));
+		printf("malloc 3 failed");
 	}
-	
-	printf("output data is '%s'\n", output);
+	printf("bytes written: %lu\n", bert_encoder_total(encoder));
+	if (!(data->tuple->elements[3] = bert_data_create_string(arguments)))
+	{
+		printf("malloc 4 failed");
+	}
+	printf("bytes written: %lu\n", bert_encoder_total(encoder));
 
-	if (send(sd, output, strlen(output), 0) == -1) {
+	printf("preparing encode buffer\n");
+	bert_encoder_buffer(encoder, output, OUTPUT_SIZE);
+	printf("bytes written: %lu\n", bert_encoder_total(encoder));
+
+	if ((result = bert_encoder_push(encoder, data)) != BERT_SUCCESS)
+	{
+		printf("HMMMM: %s\n", bert_strerror(result));
+	}
+	printf("bytes written: %lu\n", bert_encoder_total(encoder));
+
+	printf("output string is '%s'\n", output);
+
+	if (send(sd, output, sizeof(output), 0) == -1) {
 		perror("send");
 		exit(1);
 	}
@@ -240,6 +193,8 @@ void send_command(int sd, char *command) {
 	bert_data_destroy(data);
 	bert_encoder_destroy(encoder);
 	
+	printf("sent!\n");
+
 	char buf[1024];
 	int numbytes;
 	if((numbytes = recv(sd, buf, 1024-1, 0)) == -1) {
@@ -247,26 +202,6 @@ void send_command(int sd, char *command) {
 		exit(1);
 	}
 
-	char *resp = NULL;
-	int buf_len;
+	printf("%s\n", buf);
 
-	switch (buf[0]) {
-		case '-':
-			break;
-		case '+':
-		case ':':
-			buf_len = strlen(buf) - 3;
-			if (buf_len >= 2) {
-				resp = malloc(1 + buf_len);
-				memcpy(resp, buf+1, buf_len);
-				printf("%s\n", resp);
-				free(resp);
-			} else {
-				printf("protocol error \n");
-			}
-			break;
-		default:
-			printf("%s\n", buf);
-			break;
-	}
 }
