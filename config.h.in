@@ -6,9 +6,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `BERT' library (-lBERT). */
-#undef HAVE_LIBBERT
-
 /* Define to 1 if you have the `event' library (-levent). */
 #undef HAVE_LIBEVENT
 

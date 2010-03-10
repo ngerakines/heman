@@ -30,13 +30,9 @@ Copyright (c) 2010 Nick Gerakines <nick at gerakines dot net>
 #include <signal.h>
 #include <unistd.h>
 
-#include <bert/encoder.h>
-#include <bert/magic.h>
-#include <bert/errno.h>
-
 typedef char byte_t;
 
-void send_command_call(int sd, char *module, char *function, char *arguments);
+void send_command(int sd, char *command);
 
 int main(int argc, char **argv) {
 	char *ipaddress = "127.0.0.1";
@@ -122,7 +118,7 @@ int main(int argc, char **argv) {
 
 	switch (action) {
 		case 1:
-			send_command_call(sd, argv[optind + 1], argv[optind + 2], argv[optind + 3]);
+			send_command(sd, "TEST\r\n");
 			break;
 		default:
 			break;
@@ -133,67 +129,12 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-#define OUTPUT_SIZE	1024
-
-void send_command_call(int sd, char *module, char *function, char *arguments) {
-	unsigned char output[OUTPUT_SIZE];
-	bert_encoder_t *encoder;
-
-	printf("creating encoder\n");
-	if (!(encoder = bert_encoder_create()))
-	{
-		printf("malloc failed\n");
-	}
-
-	bert_data_t *data;
-	int result;
-	printf("about to create bert data.\n");
-	
-	if (!(data = bert_data_create_tuple(4)))
-	{
-		printf("malloc failed\n");
-	}
-
-	if (!(data->tuple->elements[0] = bert_data_create_atom("call")))
-	{
-		printf("malloc 1 failed\n");
-	}
-	if (!(data->tuple->elements[1] = bert_data_create_string(module)))
-	{
-		printf("malloc 2 failed");
-	}
-	if (!(data->tuple->elements[2] = bert_data_create_string(function)))
-	{
-		printf("malloc 3 failed");
-	}
-	printf("bytes written: %lu\n", bert_encoder_total(encoder));
-	if (!(data->tuple->elements[3] = bert_data_create_string(arguments)))
-	{
-		printf("malloc 4 failed");
-	}
-	printf("bytes written: %lu\n", bert_encoder_total(encoder));
-
-	printf("preparing encode buffer\n");
-	bert_encoder_buffer(encoder, output, OUTPUT_SIZE);
-	printf("bytes written: %lu\n", bert_encoder_total(encoder));
-
-	if ((result = bert_encoder_push(encoder, data)) != BERT_SUCCESS)
-	{
-		printf("HMMMM: %s\n", bert_strerror(result));
-	}
-	printf("bytes written: %lu\n", bert_encoder_total(encoder));
-
-	printf("output string is '%s'\n", output);
-
-	if (send(sd, output, sizeof(output), 0) == -1) {
+void send_command(int sd, char *command) {
+	if (send(sd, command, sizeof(command), 0) == -1) {
 		perror("send");
 		exit(1);
 	}
-	
-	bert_data_destroy(data);
-	bert_encoder_destroy(encoder);
-	
-	printf("sent!\n");
+
 
 	char buf[1024];
 	int numbytes;
