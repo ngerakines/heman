@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 DEFINE_HASHTABLE_SEARCH(search_stats, struct stat_key, struct stat_value);
 
@@ -75,6 +76,7 @@ Stats add_stat(struct hashtable *h, char *namespace, char *key, int value, int o
 	struct stat_value *key_value;
 
 	if (NULL == (key_value = search_stats(h, new_key))) {
+		printf("Creating new key_value (stat_value)\n");
 		key_value = (struct stat_value *)malloc(sizeof(struct stat_value));
 		key_value->namespace = namespace;
 		key_value->key = key;
@@ -92,17 +94,23 @@ Stats add_stat(struct hashtable *h, char *namespace, char *key, int value, int o
 	time(&now);
 
 	if (key_value->stats == NULL) {
+		printf(" => stat is first.\n");
 		StatNode first;
 		first = create_stat(value, now);
 		key_value->stats = first;
 	} else {
-		if (key_value->stats->when == now) {
+		int wheni, nowi = 0;
+		wheni = floor(key_value->stats->when / 60);
+		nowi = floor(now / 60);
+		if (wheni == nowi) {
 			if (op == 1) {
+				printf(" => stat is not first but when == now.\n");
 				key_value->stats->value += value;
 			} else if (op == 2) {
 				key_value->stats->value = value;
 			}
 		} else {
+			printf(" => when (%d) != now (%d).\n", wheni, nowi);
 			key_value->stats = push_stat(key_value->stats, value, now);
 		}
 	}
@@ -130,12 +138,14 @@ StatNode push_stat(StatNode head, int value, time_t when) {
 
 StatNode last_for_nsk(struct hashtable *hash_table, char *namespace, char *key) {
 	if (hash_table == NULL) {
+		printf("hash_table == NULL\n");
 		return NULL;
 	}
 	struct stat_key *search_key;
 	search_key = (struct stat_key *)malloc(sizeof(struct stat_key));
 	if (search_key == NULL) {
 		// NKG: Should I just call `exit(1)` here?
+		printf("search_key == NULL\n");
 		return NULL;
 	}
 	search_key->namespace = namespace;
@@ -145,6 +155,7 @@ StatNode last_for_nsk(struct hashtable *hash_table, char *namespace, char *key) 
 	key_value = search_stats(hash_table, search_key);
 	free(search_key);
 	if (key_value == NULL) {
+		printf("key_value == NULL\n");
 		return NULL;
 	}
 

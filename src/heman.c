@@ -43,6 +43,7 @@ THE SOFTWARE.
 #include "stats.h"
 #include "rules.h"
 #include "commands.h"
+#include "globals.h"
 
 // TODO: Parse incoming commands here.
 void on_read(int fd, short ev, void *arg) {
@@ -61,7 +62,6 @@ void on_read(int fd, short ev, void *arg) {
 		free(client);
 		return;
 	}
-
 	process_command(fd, buffer);
 }
 
@@ -87,6 +87,9 @@ void on_accept(int fd, short ev, void *arg) {
 }
 
 int main(int argc, char **argv) {
+	stats_table = NULL;
+	rules_table = NULL;
+
 	int listen_fd;
 	struct sockaddr_in listen_addr;
 	int reuseaddr_on = 1;
